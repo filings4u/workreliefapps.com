@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://workreliefapps.com/sitemap.xml
