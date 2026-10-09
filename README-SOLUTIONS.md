@@ -1,0 +1,1 @@
+Solutions redesign. Changed: solutions.html, assets/css/site.css (scoped ws-sol- styles), assets/js/site.js (filter). Existing homepage, product page, navigation, other pages preserved. Deploy these three files to root of your GitHub Pages repository.

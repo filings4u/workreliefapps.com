@@ -1,0 +1,1 @@
+Premium Products mega menu update for Workrelief. Replace site files with these files. All 19 apps use grouped icon rows. Other menus remain intact, styled using the existing mega-menu components. Desktop hover/click and mobile tap behavior preserved.
