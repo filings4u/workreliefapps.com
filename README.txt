@@ -1,24 +1,19 @@
-WORKRELIEF WEBSITE STARTER
+WORKRELIEF PREMIUM REDESIGN
 
-Brand:
-- workrelief (lowercase)
-- Tagline: One platform. Less busywork.
-- Domain: workreliefapps.com
+This direction intentionally moves away from a low-cost SMB-suite / Zoho-like presentation.
 
-Included:
-- index.html
-- products.html
-- solutions.html
-- pricing.html
-- about.html
-- contact.html
-- login.html
-- app/index.html (dashboard shell)
-- assets/css/styles.css
-- assets/js/main.js
-- assets/img/workrelief-logo.svg
-- assets/img/workrelief-icon.svg
-- robots.txt
-- sitemap.xml
+Key changes:
+- premium dark hero
+- executive workspace as the primary product visual
+- restrained use of app colors as accents
+- 1450px max width
+- elevated KPI/data-table/product UI
+- product families rather than a wall of generic app tiles
+- premium typography/spacing and softer visual hierarchy
+- shared-platform orchestration visual
+- premium app shell included
 
-This is a front-end foundation. The login/contact forms are prototypes and are not yet connected to authentication, Supabase, billing, or production data.
+Brand retained:
+- lowercase workrelief
+- approved logo
+- navy / blue / teal identity
