@@ -251,3 +251,5 @@ body .container{width:calc(100% - 2 * clamp(18px,3vw,48px));max-width:none;margi
 .wr-enterprise-footer .wr-newsletter-form{max-width:none;width:100%}
 .wr-enterprise-footer .wr-footer-menu>section:last-child{justify-self:end;text-align:right}
 @media(max-width:650px){.wr-enterprise-footer .wr-footer-top{grid-template-columns:1fr}.wr-enterprise-footer .wr-footer-menu>section:last-child{justify-self:start;text-align:left}}
+
+.wr-footer-brand-extra{margin-top:22px;max-width:470px}.wr-footer-brand-extra strong{display:block;font-size:17px;color:#193154;line-height:1.4}.wr-footer-brand-extra p{max-width:410px;margin:9px 0 12px;line-height:1.65}.wr-footer-brand-extra a{color:#1266f6;font-size:13px;font-weight:750}.wr-footer-work-note{margin-top:20px;border-top:1px solid #dce7f3;padding-top:16px;max-width:220px}.wr-footer-work-note strong,.wr-footer-work-note span{display:block}.wr-footer-work-note strong{font-size:12px;color:#193154}.wr-footer-work-note span{font-size:12px;line-height:1.6;color:#617c9c;margin-top:8px}
