@@ -16,3 +16,15 @@ document.querySelectorAll('.dropdown-panel a').forEach(a=>a.addEventListener('cl
 
 // Solutions page category filter
 document.addEventListener('DOMContentLoaded',()=>{const controls=document.querySelectorAll('[data-solution-filter]');const cards=document.querySelectorAll('[data-solution-type]');controls.forEach(button=>button.addEventListener('click',()=>{const group=button.dataset.solutionFilter;controls.forEach(b=>b.classList.toggle('active',b===button));cards.forEach(card=>card.hidden=group!=='all'&&card.dataset.solutionType!==group)}))});
+
+
+// Enrich the shared enterprise footer without duplicating markup on every page.
+document.querySelectorAll('.wr-enterprise-footer').forEach(footer=>{
+ const brand=footer.querySelector('.wr-footer-top > div:first-child');
+ if(brand&&!brand.querySelector('.wr-footer-platform')){
+  const panel=document.createElement('div');
+  panel.className='wr-footer-platform';
+  panel.innerHTML='<span class="wr-footer-platform-label">EXPLORE THE PLATFORM</span><div class="wr-footer-platform-links"><a href="products.html">19 connected apps <span aria-hidden="true">↗</span></a><a href="solutions.html">Solutions for your team <span aria-hidden="true">↗</span></a><a href="comparisons.html">Compare platforms <span aria-hidden="true">↗</span></a></div>';
+  brand.append(panel);
+ }
+});
