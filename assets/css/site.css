@@ -245,3 +245,9 @@
 /* Full-width content rails: consistent edge gutters across all pages */
 body .container{width:calc(100% - 2 * clamp(18px,3vw,48px));max-width:none;margin-left:auto;margin-right:auto}
 @media(max-width:650px){body .container{width:calc(100% - 36px)}}
+
+/* Align the footer's rightmost content with the shared right gutter */
+.wr-enterprise-footer .wr-footer-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,70px)}
+.wr-enterprise-footer .wr-newsletter-form{max-width:none;width:100%}
+.wr-enterprise-footer .wr-footer-menu>section:last-child{justify-self:end;text-align:right}
+@media(max-width:650px){.wr-enterprise-footer .wr-footer-top{grid-template-columns:1fr}.wr-enterprise-footer .wr-footer-menu>section:last-child{justify-self:start;text-align:left}}
