@@ -16,3 +16,25 @@ document.querySelectorAll('.dropdown-panel a').forEach(a=>a.addEventListener('cl
 
 // Solutions page category filter
 document.addEventListener('DOMContentLoaded',()=>{const controls=document.querySelectorAll('[data-solution-filter]');const cards=document.querySelectorAll('[data-solution-type]');controls.forEach(button=>button.addEventListener('click',()=>{const group=button.dataset.solutionFilter;controls.forEach(b=>b.classList.toggle('active',b===button));cards.forEach(card=>card.hidden=group!=='all'&&card.dataset.solutionType!==group)}))});
+
+// Shared navigation: keep mobile drawer and dropdown states in sync.
+(function(){
+  const toggle=document.querySelector('.menu-toggle');
+  const links=document.querySelector('.nav-links');
+  const closeMenus=()=>{
+    if(links) links.classList.remove('open');
+    if(toggle) toggle.setAttribute('aria-expanded','false');
+    document.querySelectorAll('.dropdown.open').forEach(drop=>{
+      drop.classList.remove('open');
+      drop.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded','false');
+    });
+  };
+  document.querySelectorAll('.nav-links a').forEach(link=>link.addEventListener('click',closeMenus));
+  document.addEventListener('click',event=>{
+    if(!event.target.closest('.site-header')) closeMenus();
+  });
+  window.addEventListener('resize',()=>{
+    if(window.matchMedia('(min-width: 1025px)').matches) closeMenus();
+  });
+  document.querySelector('.search-trigger')?.setAttribute('aria-label','Search all WorkRelief apps');
+})();
