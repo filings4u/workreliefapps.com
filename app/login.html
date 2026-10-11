@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#071b44">
+<title>Sign in | WorkRelief</title>
+<link rel="icon" href="../assets/img/fav.png">
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#071b44;background:#f5f8fd}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh}
+.auth-layout{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) minmax(460px,1fr)}
+.brand-panel{position:relative;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;padding:clamp(26px,4vh,56px) clamp(32px,5vw,80px);background:linear-gradient(142deg,#061b47 0%,#0c3f99 61%,#1264ec 100%);color:#fff}
+.brand-panel:after{content:"";position:absolute;width:560px;height:560px;border:1px solid #ffffff25;border-radius:50%;right:-260px;bottom:-240px;box-shadow:0 0 0 95px #ffffff08,0 0 0 205px #ffffff08;pointer-events:none}
+.brand-top{position:relative;z-index:1}
+.brand-logo{display:block;width:228px;max-width:80%;background:#fff;border-radius:13px;padding:12px 17px}
+.brand-copy{position:relative;z-index:1;max-width:610px;margin:24px 0}
+.brand-kicker{text-transform:uppercase;letter-spacing:.18em;font-size:12px;font-weight:800;color:#a4d9ff;margin:0 0 26px}
+.brand-copy h1{font-size:clamp(38px,4vw,65px);letter-spacing:-.055em;line-height:1.08;margin:0 0 27px}
+.brand-copy>p:last-child{color:#d5e4ff;font-size:18px;line-height:1.75;max-width:480px;margin:0}
+.brand-footer{position:relative;z-index:1;color:#b9d3f7;font-size:13px}
+.form-panel{display:flex;align-items:center;justify-content:center;padding:24px clamp(28px,5vw,88px);background:#f7faff}
+.form-inner{width:100%;max-width:460px}
+.form-kicker{font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1761f5;margin:0 0 15px}
+.form-inner h2{font-size:clamp(32px,3vw,43px);letter-spacing:-.045em;line-height:1.15;margin:0 0 13px}
+.form-intro{font-size:16px;color:#627697;margin:0 0 26px}
+#auth-form{display:grid;gap:16px}
+#auth-form label{display:block;font-weight:700;font-size:14px;color:#142a51}
+#auth-form input{display:block;width:100%;margin-top:10px;padding:15px 16px;min-height:50px;border:1px solid #cedbf0;border-radius:11px;background:#fff;font:inherit;font-weight:400;color:#071b44;outline:none;transition:border-color .15s,box-shadow .15s}
+#auth-form input:focus{border-color:#1761f5;box-shadow:0 0 0 4px #1761f51b}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:12px 18px;border:1px solid #d0dff4;border-radius:11px;background:#fff;color:#0754cf;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s,transform .15s}
+.button:hover{background:#edf5ff}.button:disabled{opacity:.65;cursor:wait}
+.button-primary{width:100%;min-height:56px;margin-top:4px;background:#1761f5;border-color:#1761f5;color:white;box-shadow:0 12px 24px #1761f525;font-size:16px}
+.button-primary:hover{background:#084ee0}
+.reset-row{display:flex;justify-content:flex-end;margin-top:-6px}
+.link-button{border:0;padding:4px 0;background:transparent;color:#145dea;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.link-button:hover{text-decoration:underline}
+#auth-status{min-height:20px;margin:12px 0 0;color:#385987;font-size:14px;line-height:1.5}
+.form-footer{color:#8594ad;font-size:12px;margin:16px 0 0}
+/* On desktop, fit both panels inside the available viewport height. */
+@media(min-width:901px) and (min-height:650px){
+  .auth-layout{height:100dvh;min-height:0;overflow:hidden}
+  .brand-panel,.form-panel{min-height:0}
+}
+/* Shorter windows remain scrollable rather than hiding important controls. */
+@media(min-width:901px) and (max-height:649px){
+  .auth-layout{min-height:650px}
+}
+@media(max-width:900px){.auth-layout{grid-template-columns:1fr}.brand-panel{padding:27px 28px 32px;min-height:auto}.brand-logo{width:190px}.brand-copy{margin:36px 0 6px}.brand-copy h1{font-size:34px;margin-bottom:14px}.brand-copy>p:last-child{font-size:15px;line-height:1.6}.brand-kicker,.brand-footer{display:none}.form-panel{padding:46px 24px 60px}.form-inner{max-width:500px}}
+@media(max-width:480px){.brand-copy h1{font-size:29px}.form-panel{padding:36px 22px 55px}.form-intro{margin-bottom:30px}}
+</style>
+</head>
+<body>
+<main class="auth-layout">
+<section class="brand-panel" aria-label="About WorkRelief">
+  <div class="brand-top"><img class="brand-logo" src="../assets/img/logo.png" alt="WorkRelief — One platform. Less busywork."></div>
+  <div class="brand-copy">
+    <p class="brand-kicker">Your business. Connected.</p>
+    <h1>One platform.<br>Less busywork.</h1>
+    <p>Bring your customers, sales pipeline, tasks, and team together in one workspace. Stay organized and focus on moving your business forward.</p>
+  </div>
+  <div class="brand-footer">© 2026 WorkRelief. All rights reserved.</div>
+</section>
+<section class="form-panel" aria-label="Sign in to WorkRelief">
+  <div class="form-inner">
+    <p class="form-kicker">WorkRelief CRM</p>
+    <h2>Welcome back.</h2>
+    <p class="form-intro">Sign in to access your workspace.</p>
+    <form id="auth-form">
+      <label for="auth-email">Email address<input id="auth-email" type="email" autocomplete="email" placeholder="you@company.com" required></label>
+      <label for="auth-password">Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="Enter your password" required></label>
+      <div class="reset-row"><button id="auth-reset" class="link-button" type="button">Forgot password?</button></div>
+      <button id="auth-submit" class="button button-primary" type="submit">Sign in →</button>
+    </form>
+    <p id="auth-status" role="status" aria-live="polite"></p>
+    <p class="form-footer">Secure workspace access.</p>
+  </div>
+</section>
+</main>
+<script type="module">
+import{createClient}from 'https://esm.sh/@supabase/supabase-js@2';
+const sb=createClient('https://cqzwoskpgefacghdnuyz.supabase.co','sb_publishable_CoIoX7Pinqd2o4kJwqCTqA_RKmePPZt');
+const email=document.getElementById('auth-email'),password=document.getElementById('auth-password'),status=document.getElementById('auth-status'),submit=document.getElementById('auth-submit');
+const say=(message)=>{status.textContent=message};
+const next=new URLSearchParams(location.search).get('next');
+const destination=next==='app/crm.html'?new URL('../app/crm.html',location.href).href:new URL('crm.html',location.href).href;
+const form=document.getElementById('auth-form');
+function busy(value){submit.disabled=value;document.getElementById('auth-reset').disabled=value}
+try{
+ const{data:{session}}=await sb.auth.getSession();
+ if(session)location.replace(destination);
+}catch(error){say('Could not connect to authentication. Please try again shortly.')}
+form.addEventListener('submit',async event=>{
+ event.preventDefault();if(!form.reportValidity())return;
+ busy(true);say('Signing in…');
+ try{const{error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;location.replace(destination)}
+ catch(error){say(error.message||'Sign-in failed. Please try again.')}
+ finally{busy(false)}
+});
+document.getElementById('auth-reset').addEventListener('click',async()=>{
+ if(!email.reportValidity())return;
+ busy(true);say('Requesting password reset…');
+ try{
+ const redirect=new URL('../reset-password.html',location.href).href;
+ const{error}=await sb.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:redirect});
+ if(error)throw error;
+ say('If an account exists for this email, a reset link will be sent. Check your inbox.');
+ }catch(error){say(error.message||'Unable to request a reset link.')}
+ finally{busy(false)}
+});
+</script>
+</body>
+</html>
