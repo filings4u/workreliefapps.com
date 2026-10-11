@@ -944,22 +944,34 @@ try{
           ]); if(te||qe||pe)throw te||qe||pe;
           const admin=['owner','admin'].includes(member.role);
           const form=admin?`<div class="actions"><button type="button" class="btn" onclick="wrSeedEmailTemplates()">Install default templates</button></div><form class="wr-management-form" onsubmit="wrSaveEmailTemplate(event)">${section('New branded email template',field('Template key *','template_key','','text','required pattern="[a-z][a-z0-9_]{2,63}"')+field('Template name *','name','','text','required')+field('Subject *','subject','','text','required maxlength="220"')+field('Headline *','headline','','text','required maxlength="180"')+area('Message *','body_text','')+`<p class="sub">The WorkRelief-branded wrapper, accessible plain-text version, and email footer are applied by the delivery service.</p>`)}${formActions('Save email template')}</form>`:'';
-          openDrawer(`<div class="eyebrow">WORKRELIEF EMAILS</div><h2>Branded automation emails</h2><p class="sub">Sender: <strong>notifications@workreliefapps.com</strong> · Verified sender domain. Automatic delivery requires a configured mail dispatcher. No messages send merely by opening this screen.</p><section class="wr-form-section"><h3>WorkRelief CRM branding</h3><div class="wr-email-brand-preview"><img src="../assets/img/logo.png" alt="WorkRelief"/><span class="wr-email-brand-chip">CRM</span></div><p class="sub">CRM identity: blue #1768f5, authentic WorkRelief logo, consistent email headers and actions.</p>${admin?`<div class="actions"><button type="button" class="btn primary" onclick="wrPublishBrandLogo()">Publish brand logo to storage</button></div>`:""}<p class="sub">The publishing action securely uploads the existing WorkRelief logo to the public brand-assets bucket. You only need to publish it once.</p></section>${form}<section class="wr-form-section"><h3>Email preferences</h3><form onsubmit="wrSaveEmailPreferences(event)"><label><input type="checkbox" name="automation_emails" ${prefs?.automation_emails!==false?'checked':''}> Automation messages</label><label><input type="checkbox" name="reminder_emails" ${prefs?.reminder_emails!==false?'checked':''}> Reminders</label><label><input type="checkbox" name="digest_emails" ${prefs?.digest_emails?'checked':''}> Daily digest (when connected)</label><div class="actions"><button type="submit" class="btn primary">Save preferences</button></div></form></section><section class="wr-form-section"><h3>Email templates</h3>${(templates||[]).map(t=>`<p><strong>${safe(t.name)}</strong><small>${safe(t.subject)} · ${t.enabled?'Enabled':'Paused'}</small></p>`).join('')||'<p class="sub">No templates yet. An administrator can install the WorkRelief defaults.</p>'}</section><section class="wr-form-section"><h3>Delivery queue</h3>${(queue||[]).map(q=>`<p><strong>${safe(q.subject)}</strong><small>${safe(q.status)} · ${safe(new Date(q.scheduled_at).toLocaleString())}</small></p>`).join('')||'<p class="sub">No queued emails.</p>'}</section>`);
+          openDrawer(`<div class="eyebrow">WORKRELIEF EMAILS</div><h2>Branded automation emails</h2><p class="sub">Sender: <strong>notifications@workreliefapps.com</strong> · Verified sender domain. Automatic delivery requires a configured mail dispatcher. No messages send merely by opening this screen.</p><section class="wr-form-section"><h3>WorkRelief CRM branding</h3><div class="wr-email-brand-preview"><img src="../assets/img/logo.png" alt="WorkRelief"/><span class="wr-email-brand-chip">CRM</span></div><p class="sub">CRM identity: blue #1768f5, authentic WorkRelief logo, consistent email headers and actions.</p>${admin?`<div class="actions"><button type="button" id="wr-brand-publish-btn" class="btn primary" onclick="wrPublishBrandLogo()">Publish brand logo to storage</button><span id="wr-brand-publish-status" role="status" aria-live="polite" style="display:inline-flex;align-items:center;min-height:42px;font-size:13px;font-weight:600;color:#1768f5"></span></div>`:""}<p class="sub">The publishing action securely uploads the existing WorkRelief logo to the public brand-assets bucket. You only need to publish it once.</p></section>${form}<section class="wr-form-section"><h3>Email preferences</h3><form onsubmit="wrSaveEmailPreferences(event)"><label><input type="checkbox" name="automation_emails" ${prefs?.automation_emails!==false?'checked':''}> Automation messages</label><label><input type="checkbox" name="reminder_emails" ${prefs?.reminder_emails!==false?'checked':''}> Reminders</label><label><input type="checkbox" name="digest_emails" ${prefs?.digest_emails?'checked':''}> Daily digest (when connected)</label><div class="actions"><button type="submit" class="btn primary">Save preferences</button></div></form></section><section class="wr-form-section"><h3>Email templates</h3>${(templates||[]).map(t=>`<p><strong>${safe(t.name)}</strong><small>${safe(t.subject)} · ${t.enabled?'Enabled':'Paused'}</small></p>`).join('')||'<p class="sub">No templates yet. An administrator can install the WorkRelief defaults.</p>'}</section><section class="wr-form-section"><h3>Delivery queue</h3>${(queue||[]).map(q=>`<p><strong>${safe(q.subject)}</strong><small>${safe(q.status)} · ${safe(new Date(q.scheduled_at).toLocaleString())}</small></p>`).join('')||'<p class="sub">No queued emails.</p>'}</section>`);
         }catch(error){fail(error)}
       };
-      window.wrPublishBrandLogo=async()=>{try{
-        if(!['owner','admin'].includes(member.role))return toast('Administrator access required');
-        const source=await fetch(new URL('../assets/img/logo.png',location.href));
-        if(!source.ok)throw new Error('Unable to load the WorkRelief logo');
-        const image=await source.arrayBuffer();
-        const {data:session,error:authError}=await sb.auth.getSession();
-        if(authError||!session?.session?.access_token)throw new Error('Please sign in again');
-        const endpoint='https://cqzwoskpgefacghdnuyz.supabase.co/functions/v1/workrelief-publish-brand-logo';
-        const upload=await fetch(endpoint,{method:'POST',headers:{authorization:'Bearer '+session.session.access_token,'content-type':'image/png'},body:image});
-        const result=await upload.json().catch(()=>({}));
-        if(!upload.ok||!result.ok)throw new Error(result.error||'Logo upload failed');
-        toast('WorkRelief logo published successfully');await wrEmailCenter();
-      }catch(error){fail(error)}};
+      window.wrPublishBrandLogo=async()=>{
+        const button=document.getElementById('wr-brand-publish-btn');
+        const status=document.getElementById('wr-brand-publish-status');
+        if(!button||button.disabled)return;
+        const report=(message,color)=>{if(status){status.textContent=message;status.style.color=color||'#1768f5';}};
+        button.disabled=true;button.textContent='Publishing logo…';report('Uploading your WorkRelief logo…');
+        try{
+          if(!['owner','admin'].includes(member.role))throw new Error('Administrator access required');
+          const source=await fetch(new URL('../assets/img/logo.png',location.href));
+          if(!source.ok)throw new Error('Unable to load the WorkRelief logo');
+          const image=await source.arrayBuffer();
+          const {data:session,error:authError}=await sb.auth.getSession();
+          if(authError||!session?.session?.access_token)throw new Error('Please sign in again');
+          const endpoint='https://cqzwoskpgefacghdnuyz.supabase.co/functions/v1/workrelief-publish-brand-logo';
+          const upload=await fetch(endpoint,{method:'POST',headers:{authorization:'Bearer '+session.session.access_token,'content-type':'image/png'},body:image});
+          const result=await upload.json().catch(()=>({}));
+          if(!upload.ok||!result.ok)throw new Error(result.error||'Logo upload failed');
+          report('✓ Logo published successfully. No further upload needed.','#098168');
+          button.textContent='Logo published ✓';
+          button.disabled=true;
+        }catch(error){
+          report('Upload failed: '+(error?.message||'Please try again'),'#c0392b');
+          button.textContent='Retry logo upload';button.disabled=false;
+        }
+      };
       window.wrSeedEmailTemplates=async()=>{try{const {data,error}=await sb.rpc('wr_phase4_seed_email_templates',{p_workspace_id:workspaceId});if(error)throw error;toast(`${Number(data||0)} WorkRelief templates added`);await wrEmailCenter()}catch(e){fail(e)}};
       window.wrSaveEmailTemplate=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(String(f.body_text||'').trim().length<10)return toast('Enter at least 10 characters of email content');try{const {error}=await sb.from('crm_email_templates').insert({workspace_id:workspaceId,created_by:user.id,template_key:f.template_key,name:f.name,subject:f.subject,headline:f.headline,body_text:f.body_text});if(error)throw error;toast('Template saved');await wrEmailCenter()}catch(error){fail(error)}};
       window.wrSaveEmailPreferences=async e=>{e.preventDefault();const f=new FormData(e.target);try{const {error}=await sb.from('crm_email_preferences').upsert({workspace_id:workspaceId,user_id:user.id,automation_emails:f.has('automation_emails'),reminder_emails:f.has('reminder_emails'),digest_emails:f.has('digest_emails'),updated_at:new Date().toISOString()},{onConflict:'workspace_id,user_id'});if(error)throw error;toast('Email preferences updated');await wrEmailCenter()}catch(error){fail(error)}};
