@@ -2,7 +2,7 @@
 // This module never uses the Supabase service role and never trusts workspace IDs from form fields.
 const TABLES = Object.freeze({
   crm_contacts: ['id','name','email','company_id','status','lead_status','created_at'],
-  crm_companies: ['id','name','industry','account_type','status','created_at'],
+  crm_companies: ['id','name','industry','account_type','status','segment','territory_id','owner_id','parent_company_id','created_at'],
   crm_deals: ['id','title','stage','company_id','contact_id','created_at'],
   crm_activities: ['id','title','kind','company_id','contact_id','created_at'],
   crm_record_events: ['id','event_type','company_id','contact_id','created_at'],
