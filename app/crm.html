@@ -340,7 +340,7 @@ const navNames={dashboard:['⌂','Dashboard'],leads:['♧','Leads'],contacts:['�
 sidebar.querySelectorAll('[data-page]').forEach(el=>{const key=el.dataset.page;if(navNames[key])el.innerHTML=`<i aria-hidden="true">${navNames[key][0]}</i> ${navNames[key][1]}`});
 
 const top=document.querySelector('.top');const crumb=top.querySelector('.crumb');if(crumb)crumb.style.display='none';
-const right=top.querySelector('.right');if(right){right.insertAdjacentHTML('afterbegin','<button class="topbell" aria-label="Notifications" title="Notifications are not connected yet" onclick="toast(\'Notifications will be available when integrations are connected\')">♧</button>');const avatar=right.querySelector('.avatar');}
+const right=top.querySelector('.right');if(right){right.insertAdjacentHTML('afterbegin','<button class="topbell" aria-label="Notifications" title="Workspace notifications" onclick="wrNotificationCenter()">♧</button>');const avatar=right.querySelector('.avatar');}
 const search=top.querySelector('#search');if(search)search.placeholder='⌕   Search contacts, companies, deals, or anything...';
 const topBtn=right?.querySelector('.btn.primary');if(topBtn){topBtn.textContent='＋ New Deal';topBtn.onclick=()=>openNew('deal')}
 function excerpt(s,n=20){s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s}
@@ -415,7 +415,7 @@ try{
       // Active CRM list handlers use the original database UUID, never index or hash IDs.
       // Foundation milestone: server-side pages for Leads and Contacts.
       // Detail forms keep using the authenticated, UUID-backed record mappings.
-      const wrListState={leads:{page:0,search:'',items:[],total:null,loading:false,error:''},contacts:{page:0,search:'',items:[],total:null,loading:false,error:''},companies:{page:0,search:'',items:[],total:null,loading:false,error:''},pipeline:{page:0,search:'',items:[],total:null,loading:false,error:''}};
+      const wrListState={leads:{page:0,search:'',items:[],total:null,loading:false,error:'',stage:''},contacts:{page:0,search:'',items:[],total:null,loading:false,error:''},companies:{page:0,search:'',items:[],total:null,loading:false,error:''},pipeline:{page:0,search:'',items:[],total:null,loading:false,error:'',process_id:''}};
       let wrListTimer=0,wrListRequest=0;
       const wrListSize=50;
       const wrListMarkup=kind=>{
@@ -428,11 +428,11 @@ try{
         const total=state.total;
         const range=total===null?'':`${total===0?0:start+1}–${Math.min(start+state.items.length,total)} of ${total}`;
         const companyNames=new Map((state.companyNames||[]).map(c=>[c.id,c.name]));
-        const entries=state.items.map(c=>({id:c.id,name:c.name||'',email:c.email||'',phone:c.phone||'',company:companyNames.get(c.company_id)||c.company||'',status:c.status,lead_status:c.lead_status||'new'}));
-        const body=entries.map(c=>isLead?`<tr><td><b>${safe(c.name)}</b><small style="display:block;color:#8390a4">${safe(c.email)}</small></td><td>${safe(c.company)}</td><td>${safe(c.status==='lead'?({new:'New',contacted:'Contacted',qualified:'Qualified',disqualified:'Disqualified'})[c.lead_status]||'New':c.status)}</td><td><button class="record-btn" onclick="leadDetail('${safe(c.id)}')">Open →</button></td></tr>`:`<tr><td><b>${safe(c.name)}</b></td><td>${safe(c.company)}</td><td>${safe(c.email)}</td><td>${safe(c.phone)}</td><td><button class="record-btn" onclick="detail('${safe(c.id)}')">Open →</button></td></tr>`).join('');
-        const headerRow=isLead?'<th>Lead</th><th>Company</th><th>Qualification</th><th>Action</th>':'<th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Action</th>';
+        const entries=state.items.map(c=>({id:c.id,name:c.name||'',email:c.email||'',phone:c.phone||'',company:companyNames.get(c.company_id)||c.company||'',status:c.status,lead_status:c.lead_status||'new',lead_stage:c.lead_stage||'new',lead_score:Number(c.lead_score||0),lead_owner_id:c.lead_owner_id||null}));
+        const body=entries.map(c=>isLead?`<tr><td><b>${safe(c.name)}</b><small style="display:block;color:#8390a4">${safe(c.email)}</small></td><td>${safe(c.company)}</td><td>${safe(wrLeadStages.find(x=>x[0]===c.lead_stage)?.[1]||'New')} <span class="pill blue">${c.lead_score}/100</span></td><td><button class="record-btn" onclick="leadDetail('${safe(c.id)}')">Open →</button></td></tr>`:`<tr><td><b>${safe(c.name)}</b></td><td>${safe(c.company)}</td><td>${safe(c.email)}</td><td>${safe(c.phone)}</td><td><button class="record-btn" onclick="detail('${safe(c.id)}')">Open →</button></td></tr>`).join('');
+        const headerRow=isLead?'<th>Lead</th><th>Company</th><th>Qualification / score</th><th>Action</th>':'<th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Action</th>';
         const empty=state.error?`<div class="empty-note" role="alert">${safe(state.error)}</div>`:state.loading?'<div class="empty-note">Loading records…</div>':`<div class="empty-note">${state.search?'No matching records':'No records yet'}</div>`;
-        return header(titleText,caption,isLead?'New lead':'New contact').replace(isLead?"openNew('contact')":'__not_a_match__',isLead?'newLead()':'__not_a_match__')+`<div class="toolbar"><span class="sub">${state.loading?'Loading…':range||'0 records'} · Server-side search</span></div><div class="tablewrap"><table><thead><tr>${headerRow}</tr></thead><tbody>${body||`<tr><td colspan="5">${empty}</td></tr>`}</tbody></table></div><div class="actions" style="justify-content:flex-end;align-items:center;gap:12px;margin-top:14px"><button class="btn" onclick="wrChangeListPage('${kind}',-1)" ${state.page===0||state.loading?'disabled':''}>← Previous</button><span class="sub">Page ${state.page+1}${total===null?'':` of ${Math.max(1,Math.ceil(total/wrListSize))}`}</span><button class="btn" onclick="wrChangeListPage('${kind}',1)" ${state.loading||(total!==null&&(state.page+1)*wrListSize>=total)?'disabled':''}>Next →</button></div>`;
+        return header(titleText,caption,isLead?'New lead':'New contact').replace(isLead?"openNew('contact')":'__not_a_match__',isLead?'wrOpenNewLead()':'__not_a_match__')+(isLead?`<div class="toolbar" style="justify-content:space-between;flex-wrap:wrap;gap:12px"><label class="field">Qualification stage <select aria-label="Lead stage filter" onchange="wrFilterLeadStage(this.value)"><option value="">All active leads</option>${[['new','New'],['working','Working'],['mql','MQL'],['sql','SQL'],['nurturing','Nurturing'],['disqualified','Disqualified']].map(([v,l])=>`<option value="${v}" ${v===state.stage?'selected':''}>${l}</option>`).join('')}</select></label><div class="actions"><button class="btn" onclick="wrLeadReports()">Lead insights</button><button class="btn" onclick="wrLeadSourceAdmin()">Capture sources</button><button class="btn" onclick="wrLeadRouting()">Assignment rules</button></div></div>`:'')+`<div class="toolbar"><span class="sub">${state.loading?'Loading…':range||'0 records'} · Server-side search</span></div><div class="tablewrap"><table><thead><tr>${headerRow}</tr></thead><tbody>${body||`<tr><td colspan="5">${empty}</td></tr>`}</tbody></table></div><div class="actions" style="justify-content:flex-end;align-items:center;gap:12px;margin-top:14px"><button class="btn" onclick="wrChangeListPage('${kind}',-1)" ${state.page===0||state.loading?'disabled':''}>← Previous</button><span class="sub">Page ${state.page+1}${total===null?'':` of ${Math.max(1,Math.ceil(total/wrListSize))}`}</span><button class="btn" onclick="wrChangeListPage('${kind}',1)" ${state.loading||(total!==null&&(state.page+1)*wrListSize>=total)?'disabled':''}>Next →</button></div>`;
       };
       const wrPager=(kind,state)=>{
         const total=state.total,start=state.page*wrListSize;
@@ -453,8 +453,8 @@ try{
       const wrDealPageMarkup=()=>{
         const state=wrListState.pipeline,companiesById=new Map((state.companyNames||[]).map(c=>[c.id,c.name]));
         const rows=state.items.map(d=>({id:d.id,title:d.title||'',company:companiesById.get(d.company_id)||'',stage:({new:'New',qualified:'Qualified',proposal:'Proposal',negotiation:'Negotiation',won:'Won',lost:'Lost'})[d.stage]||'New',value:Number(d.amount||0)}));
-        const board=[...stages,'Lost'].map(stage=>{const stageRows=rows.filter(d=>d.stage===stage);return `<div class="lane" data-stage="${stage}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropDeal(event,this)"><div class="lanehead"><span>${stage} <small>(${stageRows.length})</small></span><small>${money(stageRows.reduce((sum,d)=>sum+d.value,0))}</small></div>${stageRows.map(d=>`<div class="deal" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${d.id}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" onclick="dealDetail('${safe(d.id)}')"><h4>${safe(d.title)}</h4><p>${safe(d.company)}</p><div class="dealfooter"><span>${money(d.value)}</span><span>↗</span></div></div>`).join('')}</div>`}).join('');
-        return header('Sales pipeline','Browse opportunities in pages of 50. Drag deals to update stages.','New deal')+wrPager('pipeline',state)+(state.error?`<p class="empty-note" role="alert">${safe(state.error)}</p>`:'')+(state.loading&&!state.items.length?'<p class="sub">Loading opportunities…</p>':`<div class="kanban">${board}</div>`)+wrPagerControls('pipeline',state)+`<p class="sub">Stage totals on this board represent the current page, not the entire pipeline.</p>`;
+        const selectedProcess=wrSalesProcesses.find(p=>p.id===state.process_id);const board=['New','Qualified','Proposal','Negotiation','Won','Lost'].filter(stage=>!selectedProcess||(selectedProcess.stages||[]).includes(stageDb[stage])).map(stage=>{const stageRows=rows.filter(d=>d.stage===stage);return `<div class="lane" data-stage="${stage}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropDeal(event,this)"><div class="lanehead"><span>${stage} <small>(${stageRows.length})</small></span><small>${money(stageRows.reduce((sum,d)=>sum+d.value,0))}</small></div>${stageRows.map(d=>`<div class="deal" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${d.id}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" onclick="dealDetail('${safe(d.id)}')"><h4>${safe(d.title)}</h4><p>${safe(d.company)}</p><div class="dealfooter"><span>${money(d.value)}</span><span>↗</span></div></div>`).join('')}</div>`}).join('');
+        return header('Sales pipeline','Browse opportunities in pages of 50. Drag deals to update stages.','New deal')+`<div class="toolbar"><div class="actions"><button class="btn" onclick="wrManageProducts()">Products & services</button><button class="btn" onclick="wrManageQuotes()">Quotes & approvals</button><button class="btn" onclick="wrSalesForecast()">Sales forecast</button><button class="btn" onclick="wrSalesPerformance()">Revenue performance</button><button class="btn" onclick="wrManageSalesProcesses()">Sales processes</button><button class="btn" onclick="wrManageSalesDocuments()">Proposals & contracts</button><button class="btn" onclick="wrManageSubscriptions()">Subscriptions</button></div></div>`+`<div class="toolbar"><label class="field">Sales process <select aria-label="Filter sales process" onchange="wrSetDealProcess(this.value)"><option value="">All processes</option>${wrSalesProcesses.map(p=>`<option value="${p.id}" ${state.process_id===p.id?'selected':''}>${safe(p.name)}</option>`).join('')}</select></label></div>`+wrPager('pipeline',state)+(state.error?`<p class="empty-note" role="alert">${safe(state.error)}</p>`:'')+(state.loading&&!state.items.length?'<p class="sub">Loading opportunities…</p>':`<div class="kanban">${board}</div>`)+wrPagerControls('pipeline',state)+`<p class="sub">Stage totals on this board represent the current page, not the entire pipeline.</p>`;
       };
       const wrLoadList=async(kind,reset=false)=>{
         if(!['leads','contacts','companies','pipeline'].includes(kind))return;
@@ -464,7 +464,8 @@ try{
         const request=++wrListRequest,search=state.search,requestedPage=state.page;
         if(page===kind)document.getElementById('content').innerHTML=wrListMarkup(kind);
         try{
-          const result=await crmPage({sb,workspaceId,table:kind==='companies'?'crm_companies':kind==='pipeline'?'crm_deals':'crm_contacts',page:requestedPage,pageSize:wrListSize,filters:kind==='leads'?{status:'lead'}:kind==='companies'&&state.segment?{segment:state.segment}:{},exclude:kind==='contacts'?{status:'lead'}:{},search});
+          if(kind==='pipeline')await wrLoadSalesProcesses();
+          const result=await crmPage({sb,workspaceId,table:kind==='companies'?'crm_companies':kind==='pipeline'?'crm_deals':'crm_contacts',page:requestedPage,pageSize:wrListSize,filters:kind==='leads'?{status:'lead',...(state.stage?{lead_stage:state.stage}:{})}:kind==='companies'&&state.segment?{segment:state.segment}:kind==='pipeline'&&state.process_id?{sales_process_id:state.process_id}:{},exclude:kind==='contacts'?{status:'lead'}:{},search});
           if(request!==wrListRequest||page!==kind)return;
           const relatedIds=[...new Set((result.records||[]).map(x=>x.company_id).filter(Boolean))];
           let relatedCompanies=[];
@@ -713,8 +714,8 @@ try{
         }catch(err){console.error(err);openDrawer(`<h2>Company unavailable</h2><p role="alert">${safe(err?.message||'Unable to load company')}</p><button class="btn" onclick="closeDrawer()">Close</button>`)}
       };
       window.newContactForCompany=id=>{openNew('contact');const form=document.querySelector('#drawer form');const sel=form?.querySelector('[name=company_id]');if(sel){const opt=document.createElement('option');opt.value=id;opt.textContent='Selected company';opt.selected=true;sel.append(opt)}};
-      window.newTaskForCompany=id=>{newTask();const form=document.querySelector('#drawer form');form?.insertAdjacentHTML('beforeend',`<input type="hidden" name="company_id" value="${id}">`)};
-      window.newActivityForCompany=id=>{newActivity();const form=document.querySelector('#drawer form');form?.insertAdjacentHTML('beforeend',`<input type="hidden" name="company_id" value="${id}">`)};
+      window.newTaskForCompany=async id=>{await newTask();const sel=document.querySelector('#drawer form [name=company_id]');if(sel){if(![...sel.options].some(x=>x.value===id))sel.add(new Option('Selected company',id));sel.value=id}};
+      window.newActivityForCompany=async id=>{await newActivity();const sel=document.querySelector('#drawer form [name=company_id]');if(sel){if(![...sel.options].some(x=>x.value===id))sel.add(new Option('Selected company',id));sel.value=id}};
       contactTimeline=c=>showTimeline({contactId:c._remoteId});
       // Contact profile reads current database state, never an incomplete paged browser list.
       detail=async id=>{
@@ -779,8 +780,8 @@ try{
           if((data||[]).length===30){button.dataset.offset=String(current+30);button.disabled=false;button.textContent='Load older history'}else button.remove();
         }catch(error){fail(error);button.disabled=false;button.textContent='Retry older history'}
       };
-      window.newTaskForContact=id=>{const c=wrListState.contacts.items.find(x=>x.id===String(id));if(!c)return;newTask();const f=document.querySelector('#drawer form');f.insertAdjacentHTML('beforeend',`<input type="hidden" name="contact_id" value="${safe(c.id)}">`)};
-      window.newActivityForContact=id=>{const c=wrListState.contacts.items.find(x=>x.id===String(id));if(!c)return;newActivity();const f=document.querySelector('#drawer form');f.insertAdjacentHTML('beforeend',`<input type="hidden" name="contact_id" value="${safe(c.id)}">`)};
+      window.newTaskForContact=async id=>{await newTask();const sel=document.querySelector('#drawer form [name=contact_id]');if(sel){if(![...sel.options].some(x=>x.value===id))sel.add(new Option('Selected contact',id));sel.value=id}};
+      window.newActivityForContact=async id=>{await newActivity();const sel=document.querySelector('#drawer form [name=contact_id]');if(sel){if(![...sel.options].some(x=>x.value===id))sel.add(new Option('Selected contact',id));sel.value=id}};
       newLead=()=>openDrawer(`<div class="eyebrow">LEADS</div><h2>New lead</h2><form class="formgrid" onsubmit="addLead(event)"><div class="field"><label>Name</label><input name="name" required maxlength="180"></div><div class="field"><label>Email</label><input name="email" type="email"></div><div class="field"><label>Company</label><select name="company_id">${companyOptions()}</select></div><button class="btn primary">Save lead</button></form>`);
 
       createContact=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const company=selectedCompany(f);try{await create('crm_contacts',{name:f.name,company_id:company?.id||null,company:company?.name||'',email:f.email||null,phone:f.phone||null,status:f.status==='Customer'?'customer':'prospect'});closeDrawer();go('contacts');toast('Contact saved')}catch(err){fail(err)}};
@@ -822,10 +823,227 @@ try{
       const selCompanies=(chosen)=>`<div class="field"><label>Company account</label><select name="company_id">${companyOptions(chosen)}</select></div>`;
       const selContacts=(chosen)=>`<div class="field"><label>Associated contact</label><select name="contact_id"><option value="">No contact</option>${chosen?`<option value="${safe(chosen)}" selected>Loading contact…</option>`:''}</select></div>`;
       const viewRecord=(eyebrow,title,body,handler,label)=>openDrawer(`<div class="eyebrow">${eyebrow}</div><h2>${title}</h2><p class="sub">Changes are saved to your WorkRelief workspace.</p><form class="wr-management-form" onsubmit="${handler}">${body}${formActions(label)}</form>`);
-      const leadForm=(c={})=>section('Lead details',field('Full name *','name',c.name,'text','required maxlength="180"')+field('Email','email',c.email,'email')+field('Telephone','phone',c.phone,'tel')+selCompanies(c.company_id)+choice('Lead progress','lead_status',[['new','New'],['contacted','Contacted'],['qualified','Qualified'],['disqualified','Disqualified']],c.lead_status||'new')+field('Source','source',c.source))+section('Qualification and internal notes',area('Notes','notes',c.notes));
+      window.wrFilterLeadStage=value=>{wrListState.leads.stage=value;wrListState.leads.page=0;void wrLoadList('leads',true)};
+      window.wrLeadReports=async()=>{
+        try{
+          const [summary,stages]=await Promise.all([sb.rpc('wr_lead_conversion_report',{p_workspace_id:workspaceId}),sb.rpc('wr_lead_stage_report',{p_workspace_id:workspaceId})]);
+          if(summary.error)throw summary.error;if(stages.error)throw stages.error;
+          const a=summary.data||{};
+          openDrawer(`<div class="eyebrow">LEAD ANALYTICS</div><h2>Lead insights</h2><p class="sub">Live figures from your workspace.</p><div class="wr-account-grid">${[['Open leads',a.open_leads],['Converted',a.converted_leads],['MQL',a.mql],['SQL',a.sql],['Overdue follow-ups',a.overdue_followups]].map(([l,v])=>`<div class="wr-account-fact"><span>${safe(l)}</span><strong>${Number(v||0)}</strong></div>`).join('')}</div><section class="wr-form-section"><h3>Qualification pipeline</h3><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Leads</th><th>Average score</th></tr></thead><tbody>${(stages.data||[]).map(r=>`<tr><td>${safe(r.stage)}</td><td>${Number(r.lead_count||0)}</td><td>${Number(r.average_score||0)}/100</td></tr>`).join('')||'<tr><td colspan="3">No leads recorded</td></tr>'}</tbody></table></div></section><button class="btn" onclick="closeDrawer()">Close</button>`);
+        }catch(error){fail(error)}
+      };
+      const wrLeadStages=[['new','New'],['working','Working'],['mql','Marketing qualified (MQL)'],['sql','Sales qualified (SQL)'],['nurturing','Nurturing'],['disqualified','Disqualified']];
+      let wrLeadTeam=[];
+      const wrLeadTeamOptions=current=>[['','Automatically assign'],...wrLeadTeam.map(m=>[m.user_id,m.display_name||m.user_id.slice(0,8)])].map(([v,l])=>`<option value="${safe(v)}" ${v===current?'selected':''}>${safe(l)}</option>`).join('');
+      const wrLoadLeadTeam=async()=>{
+        const {data:members,error}=await sb.from('workspace_members').select('user_id,role').eq('workspace_id',workspaceId).limit(200);
+        if(error)throw error;
+        const ids=(members||[]).map(x=>x.user_id);
+        const {data:profiles,error:profileError}=ids.length?await sb.from('user_profiles').select('user_id,display_name').in('user_id',ids):{data:[],error:null};
+        if(profileError)throw profileError;
+        const names=new Map((profiles||[]).map(x=>[x.user_id,x.display_name]));
+        wrLeadTeam=(members||[]).map(x=>({...x,display_name:names.get(x.user_id)||'Team member '+x.user_id.slice(0,8)}));
+      };
+      const wrLeadOwnerField=c=>`<div class="field"><label>Assigned owner</label><select name="lead_owner_id">${wrLeadTeamOptions(c.lead_owner_id||'')}</select></div>`;
+      const leadForm=(c={})=>section('Lead details',field('Full name *','name',c.name,'text','required maxlength="180"')+field('Email','email',c.email,'email')+field('Telephone','phone',c.phone,'tel')+selCompanies(c.company_id)+field('Job title','job_title',c.job_title)+field('Source','source',c.source)+field('Source details','lead_source_detail',c.lead_source_detail)+field('Campaign','lead_campaign',c.lead_campaign))+
+      section('Qualification and routing',choice('Lead stage','lead_stage',wrLeadStages,c.lead_stage||'new')+choice('Lead rating','lead_rating',[['','Not rated'],['hot','Hot'],['warm','Warm'],['cold','Cold']],c.lead_rating||'')+field('Product or service interest','lead_product_interest',c.lead_product_interest)+wrLeadOwnerField(c)+field('Next follow-up','lead_next_followup_at',c.lead_next_followup_at?.slice(0,16)||'','datetime-local')+`<div class="field"><label>Lead score</label><div class="wr-readonly-score">${Number(c.lead_score||0)} / 100 · Calculated automatically</div></div>`)+
+      section('Nurturing and internal notes',field('Disqualification reason','lead_lost_reason',c.lead_lost_reason)+area('Qualification notes','notes',c.notes));
+      const wrLeadOpen=async id=>{
+        try{await wrLoadLeadTeam();await wrEditRecord('lead',id)}catch(error){fail(error)}
+      };
+      window.wrLeadSourceAdmin=async()=>{
+        if(!['owner','admin'].includes(member.role)){toast('Capture sources require workspace administrator access');return;}
+        try{
+          const {data,error}=await sb.from('crm_lead_capture_keys').select('id,label,default_source,enabled,created_at,last_used_at').eq('workspace_id',workspaceId).order('created_at',{ascending:false}).limit(100);
+          if(error)throw error;
+          const keyRows=(data||[]).map(k=>`<div class="wr-form-section"><strong>${safe(k.label)}</strong> · ${safe(k.default_source)} · ${k.enabled?'Active':'Disabled'}<p class="sub">Created ${safe(new Date(k.created_at).toLocaleDateString())}${k.last_used_at?' · Last used '+safe(new Date(k.last_used_at).toLocaleString()):''}</p>${k.enabled?`<button class="btn" onclick="wrDisableLeadSource('${safe(k.id)}')">Disable source</button>`:''}</div>`).join('');
+          openDrawer(`<div class="eyebrow">LEAD CAPTURE</div><h2>Capture sources</h2><p class="sub">Create a private integration key for each form, website backend, or connected service. Never place a key in a public webpage or share it by email.</p>${keyRows||'<p class="sub">No integration keys have been created.</p>'}<form class="wr-management-form" onsubmit="wrCreateLeadSource(event)">${section('New capture source',field('Source name *','label','','text','required maxlength="120"')+choice('Lead source','source',[['Website','Website'],['Referral','Referral'],['Event','Event'],['Advertising','Advertising'],['Chat','Chat'],['Email','Email'],['Other','Other']],'Website'))}${formActions('Create private key')}</form><p class="sub">Use your website or integration server to connect this source. Integration instructions belong in developer documentation. Never expose private keys in public webpages.</p>`);
+        }catch(error){fail(error)}
+      };
+      window.wrCreateLeadSource=async e=>{
+        e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const btn=e.target.querySelector('button[type="submit"]');if(btn)btn.disabled=true;
+        try{
+          const {data,error}=await sb.rpc('wr_create_lead_capture_key',{p_workspace_id:workspaceId,p_label:f.label.trim(),p_source:f.source});if(error)throw error;
+          const secret=String(data||'');if(!/^[a-f0-9]{64}$/.test(secret))throw Error('Unable to generate a capture key');
+          const panel=document.createElement('section');panel.className='wr-form-section';
+          panel.innerHTML=`<h3>New private key — copy now</h3><p class="sub">This secret will not be shown again. Keep it in your integration server's environment variables.</p><textarea rows="3" readonly aria-label="New private capture key">${safe(secret)}</textarea><button type="button" class="btn" data-copy-lead-key>Copy key</button>`;
+          panel.querySelector('[data-copy-lead-key]').addEventListener('click',()=>navigator.clipboard.writeText(secret).then(()=>toast('Key copied')).catch(()=>toast('Copy the key from the field above')));
+          e.target.replaceWith(panel);toast('Capture source created');
+        }catch(error){fail(error);if(btn)btn.disabled=false}
+      };
+      window.wrDisableLeadSource=async id=>{
+        if(!await wrConfirmAction('Disable this capture source? New submissions using its key will stop immediately.',{title:'Disable capture source',confirmText:'Disable source'}))return;
+        try{const {data,error}=await sb.rpc('wr_disable_lead_capture_key',{p_key_id:id});if(error)throw error;if(!data)throw Error('Capture source not found');toast('Capture source disabled');wrLeadSourceAdmin()}catch(error){fail(error)}
+      };
+      window.wrLeadRouting=async()=>{
+        if(!['owner','admin'].includes(member.role)){toast('Routing rules require a workspace administrator');return;}
+        try{
+          await wrLoadLeadTeam();
+          const {data:territories,error:territoryError}=await sb.from('crm_territories').select('id,name').eq('workspace_id',workspaceId).order('name').limit(200);if(territoryError)throw territoryError;
+          const {data,error}=await sb.from('crm_lead_routing_rules').select('*').eq('workspace_id',workspaceId).order('priority',{ascending:true}).limit(100);
+          if(error)throw error;
+          const rows=(data||[]).map(r=>`<div class="wr-form-section"><strong>${safe(r.name)}</strong> · Priority ${Number(r.priority)} · ${r.enabled?'Enabled':'Disabled'}<p class="sub">${safe(r.match_source||'Any source')} · ${safe(r.match_product||'Any product')} · ${safe(r.match_industry||'Any industry')} · ${safe((territories||[]).find(t=>t.id===r.match_territory_id)?.name||'Any territory')} · ${r.assignment_mode==='least_loaded'?'Least loaded team member':'Assigned to '+safe(wrLeadTeam.find(m=>m.user_id===r.assigned_user_id)?.display_name||'Team member')}</p><button class="btn" onclick="wrDeleteLeadRule('${safe(r.id)}')">Remove rule</button></div>`).join('');
+          openDrawer(`<div class="eyebrow">LEAD ROUTING</div><h2>Assignment rules</h2><p class="sub">Rules run automatically for incoming leads. Lower priority numbers run first.</p>${rows||'<p class="sub">No assignment rules configured. New leads default to their creator.</p>'}<form class="wr-management-form" onsubmit="wrSaveLeadRule(event)">${section('Create routing rule',field('Rule name *','name','','text','required maxlength="120"')+field('Priority (lower first)','priority',100,'number','min="0" max="9999"')+field('Match source (optional)','match_source')+field('Match product (optional)','match_product')+field('Match industry (optional)','match_industry')+`<div class="field"><label>Territory (optional)</label><select name="match_territory_id"><option value="">Any territory</option>${(territories||[]).map(t=>`<option value="${safe(t.id)}">${safe(t.name)}</option>`).join('')}</select></div>`+choice('Assignment method','assignment_mode',[['fixed','Assign to one person'],['least_loaded','Least loaded team member']],'fixed')+`<div class="field"><label>Assigned person (for fixed rules)</label><select name="assigned_user_id">${wrLeadTeamOptions('')}</select></div>`)}${formActions('Create rule')}</form>`);
+        }catch(error){fail(error)}
+      };
+      window.wrSaveLeadRule=async e=>{
+        e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
+        if(f.assignment_mode==='fixed'&&!f.assigned_user_id)return toast('Select an owner');
+        try{const {error}=await sb.from('crm_lead_routing_rules').insert({workspace_id:workspaceId,created_by:user.id,name:f.name.trim(),priority:Number(f.priority||100),match_source:f.match_source.trim()||null,match_product:f.match_product.trim()||null,match_industry:f.match_industry.trim()||null,match_territory_id:f.match_territory_id||null,assignment_mode:f.assignment_mode==='least_loaded'?'least_loaded':'fixed',assigned_user_id:f.assignment_mode==='least_loaded'?null:f.assigned_user_id});if(error)throw error;toast('Routing rule saved');wrLeadRouting()}catch(error){fail(error)}
+      };
+      window.wrDeleteLeadRule=async id=>{
+        if(!await wrConfirmAction('Remove this lead assignment rule?',{title:'Remove routing rule',confirmText:'Remove rule'}))return;
+        try{const {error}=await sb.from('crm_lead_routing_rules').delete().eq('workspace_id',workspaceId).eq('id',id);if(error)throw error;toast('Rule removed');wrLeadRouting()}catch(error){fail(error)}
+      };
+      window.wrOpenNewLead=async()=>{try{await wrLoadLeadTeam();newLead()}catch(error){fail(error)}};
+
+      // Phase 4: native workspace automation and in-app notifications.
+      window.wrAutomationManager=async()=>{
+        try{
+          const {data:rules,error}=await sb.from('crm_automation_rules').select('*').eq('workspace_id',workspaceId).order('created_at',{ascending:false}).limit(100);
+          if(error)throw error;
+          const {data:history,error:historyError}=await sb.from('crm_automation_executions').select('id,rule_id,event_type,action_type,result,created_at').eq('workspace_id',workspaceId).order('created_at',{ascending:false}).limit(30);
+          if(historyError)throw historyError;
+          await wrPhase4LoadMembers();
+          const manager=['owner','admin'].includes(member.role);
+          const rows=(rules||[]).map(r=>`<tr><td><b>${safe(r.name)}</b><small>${safe(r.event_type.replaceAll('_',' '))}${r.match_stage?' · '+safe(r.match_stage):''}</small></td><td>${safe(r.action_type.replaceAll('_',' '))}</td><td>${r.enabled?'Enabled':'Paused'}</td><td>${manager?wrSalesActionButton(r.enabled?'Pause':'Enable',`wrToggleAutomation('${r.id}',${!r.enabled})`):''}</td></tr>`).join('');
+          const form=manager?`<section class="wr-form-section"><h3>New automation rule</h3><form class="formgrid" onsubmit="wrSaveAutomation(event)">${field('Rule name *','name','','text','required maxlength="120"')+choice('When this happens','event_type',[['lead_created','A lead is created'],['opportunity_stage_changed','An opportunity stage changes']],'lead_created')+choice('Opportunity stage (if applicable)','match_stage',[['','Any stage'],['new','New'],['qualified','Qualified'],['proposal','Proposal'],['negotiation','Negotiation'],['won','Won'],['lost','Lost']],'')+choice('Then do this','action_type',[['create_task','Create a task'],['notify_in_app','Notify a team member']],'create_task')+field('Task or notification title *','action_title','','text','required maxlength="180"')+field('Task due in (minutes)','delay_minutes',60,'number','min="0" max="525600"')+`<div class="field"><label>Assign to</label><select name="assign_to"><option value="">Record creator</option>${wrPhase4Members.map(m=>`<option value="${safe(m.user_id)}">${safe(m.user_id===user.id?'Me':m.user_id.slice(0,8)+' · Team member')}</option>`).join('')}</select></div>`}<button class="btn primary" type="submit">Create rule</button></form></section>`:'<p class="sub">An administrator manages automation rules.</p>';
+          openDrawer(`<div class="eyebrow">WORKRELIEF AUTOMATION</div><h2>Automation rules</h2><p class="sub">Create tasks or in-app notifications when leads arrive or opportunity stages change. Rules execute for new events only.</p><div class="tablewrap"><table><thead><tr><th>Rule</th><th>Action</th><th>Status</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="4">No rules configured</td></tr>'}</tbody></table></div>${form}<section class="wr-form-section"><h3>Recent executions</h3><div class="tablewrap"><table><thead><tr><th>When</th><th>Event</th><th>Outcome</th></tr></thead><tbody>${(history||[]).map(x=>`<tr><td>${safe(new Date(x.created_at).toLocaleString())}</td><td>${safe(x.event_type.replaceAll('_',' '))}</td><td>${safe(x.result)}</td></tr>`).join('')||'<tr><td colspan="3">No executions yet</td></tr>'}</tbody></table></div></section>`);
+        }catch(error){fail(error)}
+      };
+      window.wrSaveAutomation=async e=>{
+        e.preventDefault();const btn=e.target.querySelector('[type="submit"]');btn.disabled=true;
+        const f=Object.fromEntries(new FormData(e.target));
+        try{
+          const {error}=await sb.from('crm_automation_rules').insert({workspace_id:workspaceId,created_by:user.id,name:f.name.trim(),event_type:f.event_type,match_stage:f.event_type==='opportunity_stage_changed'?(f.match_stage||null):null,action_type:f.action_type,action_title:f.action_title.trim(),delay_minutes:f.action_type==='create_task'?Number(f.delay_minutes):0,assign_to:f.assign_to||null});
+          if(error)throw error;toast('Automation rule created');await wrAutomationManager();
+        }catch(error){fail(error)}finally{btn.disabled=false}
+      };
+      window.wrToggleAutomation=async(id,enabled)=>{
+        try{const {data,error}=await sb.from('crm_automation_rules').update({enabled}).eq('workspace_id',workspaceId).eq('id',id).select('id');if(error)throw error;if(!data?.length)throw Error('Rule update was denied');toast(enabled?'Automation enabled':'Automation paused');await wrAutomationManager()}catch(error){fail(error)}
+      };
+      window.wrNotificationCenter=async()=>{
+        try{const {data,error}=await sb.from('crm_in_app_notifications').select('id,title,message,is_read,created_at').eq('workspace_id',workspaceId).eq('recipient_id',user.id).order('created_at',{ascending:false}).limit(60);if(error)throw error;
+          openDrawer(`<div class="eyebrow">WORKRELIEF</div><h2>Notifications</h2><p class="sub">Notifications created by your workspace automation rules.</p>${(data||[]).map(n=>`<div class="wr-form-section"><strong>${safe(n.title)}</strong> ${n.is_read?'<span class="pill">Read</span>':'<span class="pill warn">New</span>'}<p>${safe(n.message)}</p><small>${safe(new Date(n.created_at).toLocaleString())}</small>${n.is_read?'':`<div class="actions">${wrSalesActionButton('Mark read',`wrReadNotification('${n.id}')`)}</div>`}</div>`).join('')||'<p class="sub">No notifications</p>'}`);
+        }catch(error){fail(error)}
+      };
+      window.wrReadNotification=async id=>{try{const {data,error}=await sb.from('crm_in_app_notifications').update({is_read:true}).eq('id',id).eq('workspace_id',workspaceId).eq('recipient_id',user.id).select('id');if(error)throw error;if(!data?.length)throw Error('Notification update was denied');await wrNotificationCenter()}catch(error){fail(error)}};
+      // Phase 3: database-backed products, quotes, approvals and forecasting.
+      const wrSalesFetch=async(table,cols='*',extra=q=>q)=>{
+        const {data,error}=await extra(sb.from(table).select(cols).eq('workspace_id',workspaceId));
+        if(error)throw error;return data||[];
+      };
+      const wrSalesActionButton=(label,onclick,extra='')=>`<button class="btn" type="button" onclick="${onclick}" ${extra}>${safe(label)}</button>`;
+      window.wrManageProducts=async()=>{
+        try{
+          const items=await wrSalesFetch('crm_products','id,name,sku,item_type,unit_price,currency,active',q=>q.order('name',{ascending:true}).limit(100));
+          openDrawer(`<div class="eyebrow">SALES CATALOG</div><h2>Products & services</h2><p class="sub">Workspace pricing records. Up to 100 catalog items are shown; use a unique SKU to organize your catalog.</p><div class="actions">${wrSalesActionButton('Add catalog item','wrProductForm()')}</div><div class="tablewrap"><table><thead><tr><th>Item</th><th>Type</th><th>Price</th><th></th></tr></thead><tbody>${items.map(x=>`<tr><td><b>${safe(x.name)}</b><small>${safe(x.sku||'')}</small></td><td>${safe(x.item_type)}</td><td>${money(x.unit_price)} ${safe(x.currency)}</td><td>${wrSalesActionButton('Edit',`wrProductForm('${x.id}')`)}${x.item_type==='bundle'?wrSalesActionButton('Components',`wrManageBundle('${x.id}')`):''}</td></tr>`).join('')||'<tr><td colspan="4">No products yet</td></tr>'}</tbody></table></div>`);
+        }catch(error){fail(error)}
+      };
+      window.wrProductForm=async id=>{
+        try{
+          const x=id?await wrFetchRecord('crm_products',id):{};
+          const form=section('Catalog item',field('Product or service name *','name',x.name,'text','required maxlength="200"')+field('SKU','sku',x.sku)+choice('Item type','item_type',[['product','Product'],['service','Service'],['bundle','Bundle']],x.item_type||'service')+field('Unit price','unit_price',x.unit_price??0,'number','required min="0" step="0.01"')+field('Currency (ISO code)','currency',x.currency||'USD','text','required pattern="[A-Z]{3}" maxlength="3"')+area('Description','description',x.description)+choice('Availability','active',[['true','Active'],['false','Inactive']],String(x.active??true)));
+          viewRecord('SALES CATALOG',id?'Edit catalog item':'New catalog item',form,`wrSaveProduct(event,'${id||''}')`,'Save item');
+        }catch(error){fail(error)}
+      };
+      window.wrSaveProduct=async(e,id)=>{
+        e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const b=e.target.querySelector('[type=submit]');b.disabled=true;
+        try{const values={name:f.name.trim(),sku:f.sku.trim()||null,item_type:f.item_type,unit_price:Number(f.unit_price),currency:f.currency.trim().toUpperCase(),description:f.description||null,active:f.active==='true'};
+          if(id){const {data,error}=await sb.from('crm_products').update(values).eq('workspace_id',workspaceId).eq('id',id).select('id');if(error)throw error;if(!data?.length)throw Error('Record not updated')}else{const {error}=await sb.from('crm_products').insert({...values,workspace_id:workspaceId,created_by:user.id});if(error)throw error;}
+          toast('Catalog item saved');await wrManageProducts();
+        }catch(error){fail(error)}finally{b.disabled=false}
+      };
+      window.wrManageQuotes=async()=>{
+        try{
+          const quotes=await wrSalesFetch('crm_quotes','id,title,quote_number,status,deal_id,created_at,currency',q=>q.order('created_at',{ascending:false}).limit(100));
+          openDrawer(`<div class="eyebrow">SALES QUOTES</div><h2>Quotes & approvals</h2><p class="sub">Quote amounts are calculated from saved line items.</p><div class="actions">${wrSalesActionButton('Create quote','wrQuoteForm()')}</div><div class="tablewrap"><table><thead><tr><th>Quote</th><th>Status</th><th></th></tr></thead><tbody>${quotes.map(x=>`<tr><td><b>#${x.quote_number} · ${safe(x.title)}</b></td><td>${safe(x.status)}</td><td>${wrSalesActionButton('Open',`wrOpenQuote('${x.id}')`)}</td></tr>`).join('')||'<tr><td colspan="3">No quotes yet</td></tr>'}</tbody></table></div>`);
+        }catch(error){fail(error)}
+      };
+      window.wrQuoteForm=async(dealId='')=>{
+        try{
+          const deals=await wrSalesFetch('crm_deals','id,title',q=>q.order('created_at',{ascending:false}).limit(100));
+          viewRecord('SALES QUOTES','Create quote',section('Quote details',field('Title *','title','','text','required maxlength="200"')+`<div class="field"><label>Opportunity *</label><select name="deal_id" required><option value="">Select opportunity</option>${deals.map(d=>`<option value="${d.id}" ${dealId===d.id?'selected':''}>${safe(d.title)}</option>`).join('')}</select></div>`+field('Discount (%)','discount_percent',0,'number','min="0" max="100" step="0.01"')+field('Tax (%)','tax_percent',0,'number','min="0" max="100" step="0.01"')+field('Valid until','valid_until','','date')+area('Internal notes','notes','')),`wrCreateQuote(event)`,'Create quote');
+        }catch(error){fail(error)}
+      };
+      window.wrCreateQuote=async e=>{
+        e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const b=e.target.querySelector('[type=submit]');b.disabled=true;
+        try{const {data,error}=await sb.from('crm_quotes').insert({workspace_id:workspaceId,created_by:user.id,deal_id:f.deal_id,title:f.title.trim(),discount_percent:Number(f.discount_percent),tax_percent:Number(f.tax_percent),valid_until:f.valid_until||null,notes:f.notes||null}).select('id').single();if(error)throw error;toast('Quote created');await wrOpenQuote(data.id)}catch(error){fail(error)}finally{b.disabled=false}
+      };
+      window.wrOpenQuote=async id=>{
+        try{
+          const q=await wrFetchRecord('crm_quotes',id);
+          const [items,totals,products]=await Promise.all([wrSalesFetch('crm_quote_items','id,description,quantity,unit_price,product_id',b=>b.eq('quote_id',id).order('position')),
+            sb.rpc('wr_quote_totals',{p_quote_id:id}),wrSalesFetch('crm_products','id,name,unit_price,currency',b=>b.eq('active',true).order('name').limit(100))]);
+          if(totals.error)throw totals.error;const t=totals.data?.[0]||{};
+          const canEdit=['draft','rejected'].includes(q.status);
+          const lineForm=canEdit?`<section class="wr-form-section"><h3>Add line item</h3><form onsubmit="wrAddQuoteLine(event,'${id}')" class="formgrid"><div class="field"><label>Catalog item (optional)</label><select name="product_id" onchange="wrFillQuoteCatalog(this)"><option value="">Custom item</option>${products.map(p=>`<option value="${p.id}" data-price="${p.unit_price}" data-name="${safe(p.name)}">${safe(p.name)}</option>`).join('')}</select></div>${field('Description *','description','','text','required maxlength="500"')}${field('Quantity *','quantity',1,'number','required min="0.001" step="0.001"')}${field('Unit price *','unit_price',0,'number','required min="0" step="0.01"')}<button class="btn primary" type="submit">Add item</button></form></section>`:'';
+          openDrawer(`<div class="eyebrow">QUOTE #${q.quote_number}</div><h2>${safe(q.title)}</h2><p class="sub">${safe(q.status)} · ${safe(q.currency)}${q.valid_until?' · Valid through '+safe(q.valid_until):''}</p><div class="wr-account-grid">${[['Subtotal',t.subtotal],['Discount',t.discount],['Tax',t.tax],['Total',t.total]].map(([k,v])=>`<div class="wr-account-fact"><span>${k}</span><strong>${money(Number(v||0))}</strong></div>`).join('')}</div><div class="tablewrap"><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th></th></tr></thead><tbody>${items.map(x=>`<tr><td>${safe(x.description)}</td><td>${x.quantity}</td><td>${money(x.unit_price)}</td><td>${canEdit?wrSalesActionButton('Remove',`wrRemoveQuoteLine('${id}','${x.id}')`):''}</td></tr>`).join('')||'<tr><td colspan="4">No line items</td></tr>'}</tbody></table></div>${lineForm}<div class="actions" style="margin-top:16px">${({draft:wrSalesActionButton('Submit for approval',`wrSetQuoteStatus('${id}','pending_approval')`,items.length?'':'disabled'),pending_approval:wrSalesActionButton('Approve',`wrSetQuoteStatus('${id}','approved')`)+wrSalesActionButton('Reject',`wrSetQuoteStatus('${id}','rejected')`),approved:wrSalesActionButton('Record as sent',`wrSetQuoteStatus('${id}','sent')`),sent:wrSalesActionButton('Record acceptance',`wrSetQuoteStatus('${id}','accepted')`)+wrSalesActionButton('Record decline',`wrSetQuoteStatus('${id}','declined')`),rejected:wrSalesActionButton('Resubmit',`wrSetQuoteStatus('${id}','pending_approval')`)}[q.status]||'')}${wrSalesActionButton('All quotes','wrManageQuotes()')}</div>`);
+        }catch(error){fail(error)}
+      };
+      window.wrFillQuoteCatalog=sel=>{const o=sel.selectedOptions[0],form=sel.closest('form');if(o?.dataset.name){form.elements.description.value=o.dataset.name;form.elements.unit_price.value=o.dataset.price}};
+      window.wrAddQuoteLine=async(e,id)=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const btn=e.target.querySelector('[type=submit]');btn.disabled=true;try{const {error}=await sb.from('crm_quote_items').insert({workspace_id:workspaceId,quote_id:id,product_id:f.product_id||null,description:f.description.trim(),quantity:Number(f.quantity),unit_price:Number(f.unit_price)});if(error)throw error;await wrOpenQuote(id)}catch(error){fail(error)}finally{btn.disabled=false}};
+      window.wrRemoveQuoteLine=async(id,lineId)=>{if(!await wrConfirmAction('Remove this quote item?',{title:'Remove item'}))return;try{const {error}=await sb.from('crm_quote_items').delete().eq('workspace_id',workspaceId).eq('quote_id',id).eq('id',lineId);if(error)throw error;await wrOpenQuote(id)}catch(error){fail(error)}};
+      window.wrSetQuoteStatus=async(id,status)=>{if(!await wrConfirmAction('Change this quote to '+status.replaceAll('_',' ')+'?',{title:'Update quote'}))return;try{const {data,error}=await sb.from('crm_quotes').update({status}).eq('workspace_id',workspaceId).eq('id',id).select('id');if(error)throw error;if(!data?.length)throw Error('Quote update denied');toast('Quote status updated');await wrOpenQuote(id)}catch(error){fail(error)}};
+      window.wrSalesPerformance=async()=>{try{const {data,error}=await sb.rpc('wr_sales_revenue_summary',{p_workspace_id:workspaceId});if(error)throw error;if(!data)throw Error('Revenue report access denied');const k=data;openDrawer(`<div class="eyebrow">SALES PERFORMANCE</div><h2>Revenue & win/loss</h2><p class="sub">Workspace-wide figures calculated from saved opportunities.</p><div class="wr-account-grid">${[['Open pipeline',money(k.open_pipeline)],['Weighted pipeline',money(k.weighted_pipeline)],['Won revenue',money(k.won_revenue)],['Estimated monthly recurring',money(k.estimated_monthly_recurring)],['Won opportunities',k.won_count],['Lost opportunities',k.lost_count],['Open opportunities',k.open_count],['Quotes awaiting approval',k.quotes_pending]].map(([label,value])=>`<div class="wr-account-fact"><span>${safe(label)}</span><strong>${safe(value)}</strong></div>`).join('')}</div><p class="sub">Recurring revenue is estimated from won deals using their selected billing periods, not verified subscription charges.</p>`)}catch(error){fail(error)}};
+      window.wrSalesForecast=async()=>{
+        try{const [deals,summary]=await Promise.all([wrSalesFetch('crm_deals','id,title,amount,probability,stage,expected_close,recurring_period',b=>b.not('stage','in','(won,lost)').order('expected_close',{ascending:true,nullsFirst:false}).limit(500)),sb.rpc('wr_sales_revenue_summary',{p_workspace_id:workspaceId})]);
+          if(summary.error)throw summary.error;if(!summary.data)throw Error('Revenue report access denied');const estimate=Number(summary.data.weighted_pipeline||0);
+          const rows=deals.map(d=>`<tr><td>${safe(d.title)}</td><td>${safe(d.expected_close||'Not scheduled')}</td><td>${money(d.amount)}</td><td>${Number(d.probability||0)}%</td><td>${money(Number(d.amount||0)*Number(d.probability||0)/100)}</td></tr>`).join('');
+          openDrawer(`<div class="eyebrow">SALES FORECAST</div><h2>Probability-weighted pipeline</h2><p class="sub">Current workspace, up to 500 open opportunities. Recurring periods are identified but not annualized.</p><div class="wr-account-grid"><div class="wr-account-fact"><span>Weighted estimate</span><strong>${money(estimate)}</strong></div><div class="wr-account-fact"><span>Opportunities shown</span><strong>${deals.length}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Opportunity</th><th>Close</th><th>Value</th><th>Chance</th><th>Weighted</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No open opportunities</td></tr>'}</tbody></table></div>`);
+        }catch(error){fail(error)}
+      };
+      // Phase 3: configurable processes, sales documents, subscriptions, and bundles.
+      let wrSalesProcesses=[];
+      const wrLoadSalesProcesses=async()=>{
+        wrSalesProcesses=await wrSalesFetch('crm_sales_processes','id,name,stages,active',q=>q.eq('active',true).order('name').limit(100));
+        return wrSalesProcesses;
+      };
+      window.wrManageSalesProcesses=async()=>{
+        try{const processes=await wrLoadSalesProcesses();openDrawer(`<div class="eyebrow">SALES CONFIGURATION</div><h2>Sales processes</h2><p class="sub">Create pipelines with the stages your sales teams use. Won and Lost are included in every process.</p><div class="actions">${wrSalesActionButton('New process','wrSalesProcessForm()')}</div><div class="tablewrap"><table><thead><tr><th>Process</th><th>Stages</th></tr></thead><tbody>${processes.map(p=>`<tr><td><b>${safe(p.name)}</b></td><td>${safe((p.stages||[]).join(', '))}</td></tr>`).join('')||'<tr><td colspan="2">No custom processes yet</td></tr>'}</tbody></table></div>`)}catch(error){fail(error)}
+      };
+      window.wrSalesProcessForm=()=>viewRecord('SALES CONFIGURATION','New sales process',section('Process',field('Process name *','name','','text','required maxlength="120"')+`<div class="field"><label>Allowed stages</label>${[['new','New'],['qualified','Qualified'],['proposal','Proposal'],['negotiation','Negotiation']].map(([v,l])=>`<label style="display:inline-flex;align-items:center;gap:5px;margin:8px 15px 8px 0"><input type="checkbox" name="stage" value="${v}" checked>${l}</label>`).join('')}<p class="sub">Won and Lost are always included.</p></div>`),'wrSaveSalesProcess(event)','Save process');
+      window.wrSaveSalesProcess=async e=>{e.preventDefault();const f=new FormData(e.target),name=String(f.get('name')||'').trim(),stages=[...new Set([...f.getAll('stage'),'won','lost'])];const b=e.target.querySelector('[type=submit]');b.disabled=true;try{const {error}=await sb.from('crm_sales_processes').insert({workspace_id:workspaceId,created_by:user.id,name,stages});if(error)throw error;toast('Sales process created');await wrManageSalesProcesses()}catch(error){fail(error)}finally{b.disabled=false}};
+      window.wrOpenNewDeal=async()=>{try{await wrLoadSalesProcesses();viewRecord('DEALS','Create opportunity',dealForm(),"wrSaveRecord(event,'deal','')",'Save deal')}catch(error){fail(error)}};
+      window.wrSetDealProcess=value=>{wrListState.pipeline.process_id=value||'';wrListState.pipeline.page=0;if(page==='pipeline')void wrLoadList('pipeline',true)};
+      const wrSalesDealOptions=async()=>wrSalesFetch('crm_deals','id,title',q=>q.order('created_at',{ascending:false}).limit(100));
+      const wrSalesCompanyOptions=async()=>wrSalesFetch('crm_companies','id,name',q=>q.order('name',{ascending:true}).limit(100));
+      const wrSalesSelect=(name,label,rows,value='',required=false)=>`<div class="field"><label>${safe(label)}</label><select name="${name}" ${required?'required':''}><option value="">${required?'Select one':'None'}</option>${rows.map(x=>`<option value="${x.id}" ${x.id===value?'selected':''}>${safe(x.name||x.title)}</option>`).join('')}</select></div>`;
+      window.wrManageSalesDocuments=async()=>{
+        try{const rows=await wrSalesFetch('crm_sales_documents','id,title,kind,status,version,created_at',q=>q.order('created_at',{ascending:false}).limit(100));openDrawer(`<div class="eyebrow">SALES DOCUMENTS</div><h2>Proposals & contracts</h2><p class="sub">Track document drafts, review, and acceptance. Electronic signatures are not enabled.</p><div class="actions">${wrSalesActionButton('New proposal',"wrSalesDocumentForm('proposal')")}${wrSalesActionButton('New contract',"wrSalesDocumentForm('contract')")}</div><div class="tablewrap"><table><thead><tr><th>Document</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(d=>`<tr><td><b>${safe(d.title)}</b><small>${safe(d.kind)} · Version ${d.version}</small></td><td>${safe(d.status)}</td><td>${wrSalesActionButton('Open',`wrSalesDocumentForm('${d.kind}','${d.id}')`)}</td></tr>`).join('')||'<tr><td colspan="3">No documents</td></tr>'}</tbody></table></div>`)}catch(error){fail(error)}
+      };
+      window.wrSalesDocumentForm=async(kind='proposal',id='')=>{
+        try{const [deals,quotes]=await Promise.all([wrSalesDealOptions(),wrSalesFetch('crm_quotes','id,title,deal_id',q=>q.order('created_at',{ascending:false}).limit(100))]);const d=id?await wrFetchRecord('crm_sales_documents',id):{};const locked=['accepted','void'].includes(d.status);const content=section('Document',field('Title *','title',d.title,'text',locked?'readonly':'required maxlength="200"')+wrSalesSelect('deal_id','Opportunity *',deals,d.deal_id,true)+`<div class="field"><label>Quote (optional)</label><select name="quote_id"><option value="">None</option>${quotes.map(q=>`<option value="${q.id}" ${d.quote_id===q.id?'selected':''}>${safe(q.title)}</option>`).join('')}</select></div>`+choice('Status','status',[['draft','Draft'],['review','Internal review'],['sent','Sent'],['accepted','Accepted'],['rejected','Rejected'],['void','Void']],d.status||'draft')+field('Valid until','valid_until',d.valid_until||'','date')+area('Document content','content',d.content||''));viewRecord('SALES DOCUMENTS',id?`Edit ${kind} · Version ${d.version}`:`New ${kind}`,content,`wrSaveSalesDocument(event,'${kind}','${id}')`,'Save document');
+          if(locked){document.getElementById('drawer').querySelectorAll('input,select,textarea,button[type=submit]').forEach(el=>el.disabled=true)}
+        }catch(error){fail(error)}
+      };
+      window.wrSaveSalesDocument=async(e,kind,id)=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target)),values={title:f.title.trim(),deal_id:f.deal_id,quote_id:f.quote_id||null,status:f.status,valid_until:f.valid_until||null,content:f.content||''};const b=e.target.querySelector('[type=submit]');b.disabled=true;try{if(id){const {data,error}=await sb.from('crm_sales_documents').update(values).eq('workspace_id',workspaceId).eq('id',id).select('id');if(error)throw error;if(!data?.length)throw Error('Update denied')}else{const {error}=await sb.from('crm_sales_documents').insert({...values,workspace_id:workspaceId,created_by:user.id,kind});if(error)throw error}toast('Document saved');await wrManageSalesDocuments()}catch(error){fail(error)}finally{b.disabled=false}};
+      window.wrManageSubscriptions=async()=>{
+        try{const rows=await wrSalesFetch('crm_subscriptions','id,name,status,amount,currency,billing_period,company_id,starts_on',q=>q.order('created_at',{ascending:false}).limit(100));openDrawer(`<div class="eyebrow">RECURRING REVENUE</div><h2>Subscriptions</h2><p class="sub">Account-level recurring revenue tracking. These records do not charge payment methods.</p><div class="actions">${wrSalesActionButton('New subscription','wrSubscriptionForm()')}</div><div class="tablewrap"><table><thead><tr><th>Subscription</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(s=>`<tr><td><b>${safe(s.name)}</b></td><td>${money(s.amount)} / ${safe(s.billing_period)}</td><td>${safe(s.status)}</td><td>${wrSalesActionButton('Edit',`wrSubscriptionForm('${s.id}')`)}</td></tr>`).join('')||'<tr><td colspan="4">No subscriptions yet</td></tr>'}</tbody></table></div>`)}catch(error){fail(error)}
+      };
+      window.wrSubscriptionForm=async id=>{
+        try{const [companies,deals,products]=await Promise.all([wrSalesCompanyOptions(),wrSalesDealOptions(),wrSalesFetch('crm_products','id,name',q=>q.eq('active',true).order('name').limit(100))]);const d=id?await wrFetchRecord('crm_subscriptions',id):{};
+          const content=section('Recurring revenue',field('Subscription name *','name',d.name,'text','required maxlength="180"')+wrSalesSelect('company_id','Company *',companies,d.company_id,true)+wrSalesSelect('deal_id','Opportunity (optional)',deals,d.deal_id)+wrSalesSelect('product_id','Product (optional)',products,d.product_id)+field('Amount per billing period *','amount',d.amount??0,'number','required min="0" step="0.01"')+choice('Billing period','billing_period',[['monthly','Monthly'],['quarterly','Quarterly'],['annual','Annual']],d.billing_period||'monthly')+choice('Status','status',[['draft','Draft'],['active','Active'],['paused','Paused'],['canceled','Canceled'],['expired','Expired']],d.status||'draft')+field('Starts on','starts_on',d.starts_on||'','date')+field('Ends on','end_on',d.end_on||'','date')+area('Notes','notes',d.notes||''));viewRecord('RECURRING REVENUE',id?'Edit subscription':'New subscription',content,`wrSaveSubscription(event,'${id||''}')`,'Save subscription');
+        }catch(error){fail(error)}
+      };
+      window.wrSaveSubscription=async(e,id)=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target)),values={name:f.name.trim(),company_id:f.company_id,deal_id:f.deal_id||null,product_id:f.product_id||null,amount:Number(f.amount),billing_period:f.billing_period,status:f.status,starts_on:f.starts_on||null,end_on:f.end_on||null,notes:f.notes||null};const b=e.target.querySelector('[type=submit]');b.disabled=true;try{if(id){const {data,error}=await sb.from('crm_subscriptions').update(values).eq('workspace_id',workspaceId).eq('id',id).select('id');if(error)throw error;if(!data?.length)throw Error('Update denied')}else{const {error}=await sb.from('crm_subscriptions').insert({...values,workspace_id:workspaceId,created_by:user.id});if(error)throw error}toast('Subscription saved');await wrManageSubscriptions()}catch(error){fail(error)}finally{b.disabled=false}};
+      window.wrManageBundle=async bundleId=>{
+        try{const parent=await wrFetchRecord('crm_products',bundleId);if(parent.item_type!=='bundle')throw Error('Selected item is not a bundle');const [parts,products]=await Promise.all([wrSalesFetch('crm_product_bundle_items','id,component_product_id,quantity',q=>q.eq('bundle_product_id',bundleId)),wrSalesFetch('crm_products','id,name,item_type',q=>q.eq('active',true).order('name').limit(100))]);
+          openDrawer(`<div class="eyebrow">SALES CATALOG</div><h2>${safe(parent.name)} · Bundle</h2><p class="sub">Bundle components are tracked here. Bundle sale price remains the catalog item's saved price.</p><div class="tablewrap"><table><thead><tr><th>Component</th><th>Qty</th><th></th></tr></thead><tbody>${parts.map(part=>`<tr><td>${safe(products.find(p=>p.id===part.component_product_id)?.name||'Catalog item')}</td><td>${Number(part.quantity)}</td><td>${wrSalesActionButton('Remove',`wrRemoveBundleItem('${bundleId}','${part.id}')`)}</td></tr>`).join('')||'<tr><td colspan="3">No components</td></tr>'}</tbody></table></div><section class="wr-form-section"><h3>Add component</h3><form class="formgrid" onsubmit="wrAddBundleItem(event,'${bundleId}')">${wrSalesSelect('component_product_id','Product or service',products.filter(p=>p.id!==bundleId&&p.item_type!=='bundle'),' ',true)}${field('Quantity','quantity',1,'number','required min="0.001" step="0.001"')}<button class="btn primary" type="submit">Add component</button></form></section>`);
+        }catch(error){fail(error)}
+      };
+      window.wrAddBundleItem=async(e,bundleId)=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));try{const {error}=await sb.from('crm_product_bundle_items').insert({workspace_id:workspaceId,bundle_product_id:bundleId,component_product_id:f.component_product_id,quantity:Number(f.quantity)});if(error)throw error;await wrManageBundle(bundleId)}catch(error){fail(error)}};
+      window.wrRemoveBundleItem=async(bundleId,id)=>{if(!await wrConfirmAction('Remove this component?',{title:'Remove bundle component'}))return;try{const {error}=await sb.from('crm_product_bundle_items').delete().eq('workspace_id',workspaceId).eq('bundle_product_id',bundleId).eq('id',id);if(error)throw error;await wrManageBundle(bundleId)}catch(error){fail(error)}};
       const contactForm=(c={})=>section('Contact information',field('Full name *','name',c.name,'text','required maxlength="180"')+field('Email','email',c.email,'email')+field('Phone','phone',c.phone,'tel')+selCompanies(c.company_id)+choice('Relationship','status',[['prospect','Prospect'],['customer','Customer'],['inactive','Inactive']],(c.status||'prospect').toLowerCase())+field('Job title','job_title',c.job_title)+field('Contact role','contact_role',c.contact_role)+field('Department','department',c.department)+area('Custom fields (JSON object)','custom_fields_text',JSON.stringify(c.custom_fields||{},null,2)))+section('Relationship notes',area('Notes','notes',c.notes));
-      const dealForm=(d={})=>section('Opportunity',field('Deal name *','title',d.title,'text','required maxlength="180"')+field('Amount (USD)','amount',d.amount||0,'number','min="0" step="0.01"')+choice('Pipeline stage','stage',[['new','New'],['qualified','Qualified'],['proposal','Proposal'],['negotiation','Negotiation'],['won','Won'],['lost','Lost']],d.stage||'new')+field('Expected close','expected_close',d.expected_close,'date')+selCompanies(d.company_id)+selContacts(d.contact_id))+section('Sales notes',area('Opportunity notes','notes',d.notes));
-      const activityForm=(a={})=>section('Activity / follow-up',field('Subject *','title',a.title,'text','required maxlength="180"')+choice('Type','kind',[['task','Task'],['call','Call'],['meeting','Meeting'],['note','Note']],a.kind||'task')+field('Due date and time','due_at',a.due_at?.slice(0,16)||'','datetime-local')+selCompanies(a.company_id)+selContacts(a.contact_id)+choice('Status','completed',[['false','Open'],['true','Completed']],String(!!a.completed)))+section('Details',area('Notes and outcome','notes',a.notes));
+      const dealForm=(d={})=>section('Opportunity',field('Deal name *','title',d.title,'text','required maxlength="180"')+field('Amount (USD)','amount',d.amount||0,'number','min="0" step="0.01"')+choice('Pipeline stage','stage',[['new','New'],['qualified','Qualified'],['proposal','Proposal'],['negotiation','Negotiation'],['won','Won'],['lost','Lost']],d.stage||'new')+field('Expected close','expected_close',d.expected_close,'date')+field('Probability (%)','probability',d.probability??20,'number','min="0" max="100"')+choice('Sales process','sales_process_id',[['','Standard'],...wrSalesProcesses.map(p=>[p.id,p.name])],d.sales_process_id||'')+field('Competitor','competitor',d.competitor)+field('Loss reason','loss_reason',d.loss_reason)+choice('Recurring revenue','recurring_period',[['','One-time'],['monthly','Monthly'],['quarterly','Quarterly'],['annual','Annual']],d.recurring_period||'')+selCompanies(d.company_id)+selContacts(d.contact_id))+section('Sales notes',area('Opportunity notes','notes',d.notes));
+      let wrPhase4Members=[];
+      const wrPhase4LoadMembers=async()=>{
+        const {data,error}=await sb.from('workspace_members').select('user_id,role').eq('workspace_id',workspaceId).order('created_at',{ascending:true}).limit(150);
+        if(error)throw error;
+        wrPhase4Members=data||[];
+      };
+      const wrPhase4Assignee=(id)=>`<div class="field"><label>Assigned to</label><select name="assigned_to"><option value="">Unassigned</option>${wrPhase4Members.map(m=>`<option value="${safe(m.user_id)}" ${m.user_id===id?'selected':''}>${safe(m.user_id===user.id?'Me':m.user_id.slice(0,8)+' · Team member')} (${safe(m.role)})</option>`).join('')}</select></div>`;
+      const activityForm=(a={})=>section('Activity / follow-up',field('Subject *','title',a.title,'text','required maxlength="180"')+choice('Type','kind',[['task','Task'],['call','Call'],['meeting','Meeting'],['note','Note']],a.kind||'task')+field('Due date and time','due_at',a.due_at?.slice(0,16)||'','datetime-local')+selCompanies(a.company_id)+selContacts(a.contact_id)+choice('Status','completed',[['false','Open'],['true','Completed']],String(!!a.completed))+choice('Priority','priority',[['low','Low'],['normal','Normal'],['high','High'],['urgent','Urgent']],a.priority||'normal')+wrPhase4Assignee(a.assigned_to??(a.id?null:user.id))+field('Reminder date and time','reminder_at',a.reminder_at?.slice(0,16)||'','datetime-local')+field('Meeting location','meeting_location',a.meeting_location||'','text','maxlength="200"'))+section('Details',area('Notes and outcome','notes',a.notes));
       const safePayload=(f,allowed)=>Object.fromEntries(allowed.filter(k=>Object.hasOwn(f,k)).map(k=>[k,f[k]===''?null:f[k]]));
       const saveForm=async(e,table,id,payload,landing)=>{e.preventDefault();const btn=e.target.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Saving…';try{if(id)await change(table,id,payload);else await create(table,payload);if(table==='crm_activities')wrAuxState[landing].loaded=false;closeDrawer();go(landing);toast('Changes saved')}catch(err){fail(err);btn.disabled=false;btn.textContent='Save changes'}};
       window.wrEditRecord=async(kind,id)=>{
@@ -835,19 +1053,22 @@ try{
           const raw=await wrFetchRecord(table,id);
           if(kind==='lead'&&raw.status!=='lead')throw Error('This lead has already been converted');
           if(kind==='contact'&&raw.status==='lead')throw Error('This record is still a lead');
+          if(kind==='deal')await wrLoadSalesProcesses();
+          if(kind==='activity')await wrPhase4LoadMembers();
           const form={lead:leadForm,contact:contactForm,deal:dealForm,activity:activityForm}[kind](raw);
           viewRecord(kind.toUpperCase(),`Edit ${kind}`,form,`wrSaveRecord(event,'${kind}','${id}')`,'Save changes');
         }catch(error){fail(error)}
       };
       window.wrSaveRecord=async(e,kind,id)=>{const f=Object.fromEntries(new FormData(e.target));let table,landing,payload;switch(kind){
-      case 'lead':table='crm_contacts';landing='leads';payload={...safePayload(f,['name','email','phone','company_id','lead_status','source','notes']),status:'lead'};break;
+      case 'lead':table='crm_contacts';landing='leads';payload={...safePayload(f,['name','email','phone','company_id','job_title','source','lead_source_detail','lead_campaign','lead_stage','lead_rating','lead_product_interest','lead_owner_id','lead_next_followup_at','lead_lost_reason','notes']),status:'lead',lead_status:({new:'new',working:'contacted',mql:'qualified',sql:'qualified',nurturing:'contacted',disqualified:'disqualified'})[f.lead_stage]||'new'};if(payload.lead_next_followup_at)payload.lead_next_followup_at=new Date(payload.lead_next_followup_at).toISOString();break;
       case 'contact':table='crm_contacts';landing='contacts';payload=safePayload(f,['name','email','phone','company_id','status','job_title','contact_role','department','notes']);break;
-      case 'deal':table='crm_deals';landing='pipeline';payload=safePayload(f,['title','amount','stage','expected_close','company_id','contact_id','notes']);break;
-      default:table='crm_activities';landing=f.kind==='task'?'tasks':'activities';payload=safePayload(f,['title','kind','due_at','company_id','contact_id','completed','notes']);payload.completed=f.completed==='true';if(payload.due_at)payload.due_at=new Date(payload.due_at).toISOString();}
+      case 'deal':table='crm_deals';landing='pipeline';payload=safePayload(f,['title','amount','stage','expected_close','probability','sales_process_id','competitor','loss_reason','recurring_period','company_id','contact_id','notes']);payload.probability=Number(payload.probability??20);break;
+      default:table='crm_activities';landing=f.kind==='task'?'tasks':'activities';payload=safePayload(f,['title','kind','due_at','company_id','contact_id','completed','notes','priority','assigned_to','reminder_at','meeting_location']);payload.completed=f.completed==='true';if(payload.due_at)payload.due_at=new Date(payload.due_at).toISOString();if(payload.reminder_at)payload.reminder_at=new Date(payload.reminder_at).toISOString();if(payload.reminder_at&&payload.due_at&&Date.parse(payload.reminder_at)>Date.parse(payload.due_at)){toast('Reminder must be on or before the due date');return;}}
       if(kind==='contact'){try{const custom=JSON.parse(f.custom_fields_text||'{}');if(!custom||typeof custom!=='object'||Array.isArray(custom))throw Error('Custom fields must be a JSON object');payload.custom_fields=custom}catch(error){return fail(error)}}
       if(payload.email)payload.email=payload.email.trim().toLowerCase();if(payload.phone)payload.phone=payload.phone.trim();if(payload.contact_role)payload.contact_role=payload.contact_role.trim();if(payload.department)payload.department=payload.department.trim();
       if(payload.name)payload.name=payload.name.trim();if(payload.title)payload.title=payload.title.trim();if(payload.company_id){try{const company=await wrFetchRecord('crm_companies',payload.company_id);if(table==='crm_contacts')payload.company=company.name||'';}catch(err){fail(err);return}}
       if(payload.contact_id){try{const person=await wrFetchRecord('crm_contacts',payload.contact_id);if(person.company_id&&payload.company_id&&person.company_id!==payload.company_id){toast('The contact belongs to a different company');return}}catch(err){fail(err);return}}
+      if(kind==='lead'&&!id&&(payload.email||payload.phone)){try{const {data:duplicates,error:duplicateError}=await sb.rpc('wr_lead_duplicates',{p_workspace_id:workspaceId,p_email:payload.email||null,p_phone:payload.phone||null});if(duplicateError)throw duplicateError;if(duplicates?.length){toast('A lead or contact already has this email or phone. Open the existing record instead.');return}}catch(error){return fail(error)}}
       if(kind==='contact'&&!id&&payload.email){
         try{
           const email=payload.email.trim().toLowerCase();
@@ -858,10 +1079,10 @@ try{
       }
       saveForm(e,table,id,payload,landing)};
       newLead=()=>viewRecord('LEADS','Add lead',leadForm(),"wrSaveRecord(event,'lead','')",'Save lead');
-      openNew=kind=>{kind=kind||(page==='pipeline'?'deal':page==='leads'?'lead':'contact');if(kind==='lead')return newLead();if(kind==='deal')return viewRecord('DEALS','Create opportunity',dealForm(),"wrSaveRecord(event,'deal','')",'Save deal');return viewRecord('CONTACTS','Add contact',contactForm(),"wrSaveRecord(event,'contact','')",'Save contact')};
-      newTask=()=>viewRecord('TASKS','Create follow-up',activityForm({kind:'task'}),"wrSaveRecord(event,'activity','')",'Save task');
-      newActivity=()=>viewRecord('ACTIVITIES','Log activity',activityForm({kind:'note'}),"wrSaveRecord(event,'activity','')",'Save activity');
-      window.wrEditLead=id=>{const c=wrListState.leads.items.find(x=>x.id===String(id));if(c)window.wrEditRecord('lead',c.id)};
+      openNew=kind=>{kind=kind||(page==='pipeline'?'deal':page==='leads'?'lead':'contact');if(kind==='lead')return wrOpenNewLead();if(kind==='deal')return wrOpenNewDeal();return viewRecord('CONTACTS','Add contact',contactForm(),"wrSaveRecord(event,'contact','')",'Save contact')};
+      newTask=async()=>{try{await wrPhase4LoadMembers();viewRecord('TASKS','Create follow-up',activityForm({kind:'task'}),"wrSaveRecord(event,'activity','')",'Save task')}catch(error){fail(error)}};
+      newActivity=async()=>{try{await wrPhase4LoadMembers();viewRecord('ACTIVITIES','Log activity',activityForm({kind:'note'}),"wrSaveRecord(event,'activity','')",'Save activity')}catch(error){fail(error)}};
+      window.wrEditLead=id=>{const c=wrListState.leads.items.find(x=>x.id===String(id));if(c)wrLeadOpen(c.id)};
       window.wrEditContact=id=>{const c=wrListState.contacts.items.find(x=>x.id===String(id));if(c)window.wrEditRecord('contact',c.id)};
       window.wrEditDeal=id=>{const d=wrListState.pipeline.items.find(x=>x.id===String(id));if(d)window.wrEditRecord('deal',d.id)};
       editTask=id=>{const t=wrTasks.find(x=>x.id===id);if(t)window.wrEditRecord('activity',t._remoteId)};
@@ -871,7 +1092,7 @@ try{
       // A lead opens its complete record manager rather than the obsolete sparse profile.
       leadDetail=async id=>{
         const raw=wrListState.leads.items.find(x=>x.id===String(id));if(!raw)return fail(Error('Lead not found in the current page'));const c={...raw,_remoteId:raw.id,company:(wrListState.leads.companyNames||[]).find(x=>x.id===raw.company_id)?.name||''};
-        await window.wrEditRecord('lead',c._remoteId);
+        await wrLeadOpen(c._remoteId);
         const form=document.querySelector('#drawer .wr-management-form');if(!form)return;
         form.insertAdjacentHTML('afterbegin',`<section class="wr-lead-quick-actions" aria-label="Lead actions"><div><strong>${safe(c.name)}</strong><span>${safe(c.company||'No company')} · ${safe(c.email||'No email')}</span></div><div class="wr-lead-quick-buttons"><button type="button" class="btn primary" onclick="convertLead('${safe(id)}')">Convert to contact</button><button type="button" class="btn" onclick="wrLeadFollowUp('${safe(id)}')">+ Follow-up</button></div></section>`);
       };
@@ -890,7 +1111,7 @@ try{
         try{
           const row=await wrFetchRecord('crm_deals',d.id);
           const related=row.company_id?await wrFetchRecord('crm_companies',row.company_id):null;
-          openDrawer(`<div class="eyebrow">OPPORTUNITY</div><h2>${safe(row.title)}</h2><p class="sub">${safe(related?.name||'No company')}</p><div class="wr-account-grid"><div class="wr-account-fact"><span>Value</span><strong>${money(Number(row.amount||0))}</strong></div><div class="wr-account-fact"><span>Stage</span><strong>${safe(row.stage||'new')}</strong></div><div class="wr-account-fact"><span>Expected close</span><strong>${safe(row.expected_close||'Not set')}</strong></div></div>${row.notes?`<section class="wr-detail-section"><h3>Notes</h3><p>${safe(row.notes)}</p></section>`:''}<div class="wr-management-shell"><button class="btn primary" onclick="wrEditDeal('${safe(id)}')">Edit deal details</button></div>`);
+          openDrawer(`<div class="eyebrow">OPPORTUNITY</div><h2>${safe(row.title)}</h2><p class="sub">${safe(related?.name||'No company')}</p><div class="wr-account-grid"><div class="wr-account-fact"><span>Value</span><strong>${money(Number(row.amount||0))}</strong></div><div class="wr-account-fact"><span>Stage</span><strong>${safe(row.stage||'new')}</strong></div><div class="wr-account-fact"><span>Expected close</span><strong>${safe(row.expected_close||'Not set')}</strong></div></div>${row.notes?`<section class="wr-detail-section"><h3>Notes</h3><p>${safe(row.notes)}</p></section>`:''}<div class="wr-management-shell"><button class="btn primary" onclick="wrEditDeal('${safe(id)}')">Edit deal details</button><button class="btn" onclick="wrQuoteForm('${safe(id)}')">Create quote</button><button class="btn" onclick="wrManageSalesDocuments()">Proposals & contracts</button></div>`);
         }catch(err){fail(err);openDrawer(`<h2>Opportunity unavailable</h2><p role="alert">${safe(err.message||'Unable to load')}</p><button class="btn" onclick="closeDrawer()">Close</button>`)}
       };
       // Dashboard figures and feeds are requested from Supabase, never calculated from browser caches.
@@ -948,15 +1169,17 @@ try{
         wrDrawerOriginal(html);
         queueMicrotask(()=>{
           const drawer=document.getElementById('drawer');
-          drawer.querySelectorAll('select[name="company_id"],select[name="contact_id"]').forEach(wrAttachRemoteSelector);
+          drawer.querySelectorAll('select[name="company_id"],select[name="contact_id"],select[name="deal_id"]').forEach(wrAttachRemoteSelector);
         });
       };
       function wrAttachRemoteSelector(select){
         if(select.dataset.wrRemote==='yes')return;
         select.dataset.wrRemote='yes';
         const isCompany=select.name==='company_id';
-        const table=isCompany?'crm_companies':'crm_contacts';
-        const label=isCompany?'company':'contact';
+        const isDeal=select.name==='deal_id';
+        const table=isCompany?'crm_companies':isDeal?'crm_deals':'crm_contacts';
+        const nameField=isDeal?'title':'name';
+        const label=isCompany?'company':isDeal?'opportunity':'contact';
         const initial=select.value;
         const search=document.createElement('input');
         search.type='search';search.placeholder='Search '+label+' records…';
@@ -966,10 +1189,10 @@ try{
         let request=0,timeout=0;
         const populate=async term=>{
           const current=++request;
-          const q=sb.from(table).select('id,name').eq('workspace_id',workspaceId)
-            .order('name',{ascending:true}).limit(50);
-          if(!isCompany)q.neq('status','lead');
-          if(term)q.ilike('name','%'+term.trim().slice(0,100).replace(/[%,()\\]/g,' ')+'%');
+          const q=sb.from(table).select('id,'+nameField).eq('workspace_id',workspaceId)
+            .order(nameField,{ascending:true}).limit(50);
+          if(!isCompany&&!isDeal)q.neq('status','lead');
+          if(term)q.ilike(nameField,'%'+term.trim().slice(0,100).replace(/[%,()\\]/g,' ')+'%');
           const {data,error}=await q;
           if(!select.isConnected||current!==request)return;
           if(error){search.setCustomValidity('Unable to search records');search.reportValidity();return;}
@@ -977,14 +1200,14 @@ try{
           const previouslySelected=select.value||initial;
           let options=data||[];
           if(previouslySelected&&!options.some(x=>x.id===previouslySelected)){
-            const selectedRecord=await sb.from(table).select('id,name').eq('workspace_id',workspaceId).eq('id',previouslySelected).maybeSingle();
+            const selectedRecord=await sb.from(table).select('id,'+nameField).eq('workspace_id',workspaceId).eq('id',previouslySelected).maybeSingle();
             if(selectedRecord.error)throw selectedRecord.error;
             if(selectedRecord.data)options=[selectedRecord.data,...options];
           }
           if(!select.isConnected||current!==request)return;
           select.replaceChildren();
           const blank=document.createElement('option');blank.value='';blank.textContent='No '+label;select.append(blank);
-          for(const item of options){const option=document.createElement('option');option.value=item.id;option.textContent=item.name;select.append(option)}
+          for(const item of options){const option=document.createElement('option');option.value=item.id;option.textContent=item[nameField];select.append(option)}
           select.value=previouslySelected&&options.some(x=>x.id===previouslySelected)?previouslySelected:'';
         };
         search.addEventListener('input',()=>{clearTimeout(timeout);timeout=setTimeout(()=>populate(search.value).catch(fail),250)});
@@ -1001,9 +1224,11 @@ try{
         const state=wrAuxState[kind],task=kind==='tasks';
         const heading=header(task?'My Work':'Activities',task?'Track follow-ups and outstanding work.':'A workspace timeline of calls, meetings and notes.',task?'New task':'Log activity')
           .replace("openNew('contact')",task?'newTask()':'newActivity()');
-        const rows=state.items.map(a=>`<tr><td><b>${safe(a.title)}</b></td><td>${safe(a.kind)}</td><td>${safe(a.due_at?new Date(a.due_at).toLocaleString():'—')}</td><td>${task?(a.completed?'<span class="pill">Completed</span>':'<span class="pill warn">Open</span>'):safe(a.created_at?.slice(0,10)||'')}</td><td><button class="btn" onclick="wrEditRecord('activity','${safe(a.id)}')">Edit</button>${task?` <button class="btn" onclick="wrSetTaskState('${safe(a.id)}',${!a.completed})">${a.completed?'Reopen':'Complete'}</button>`:''}</td></tr>`).join('');
+        const rows=state.items.map(a=>`<tr><td><b>${safe(a.title)}</b>${a.reminder_at?`<small> · Reminder ${safe(new Date(a.reminder_at).toLocaleString())}</small>`:''}</td><td>${safe(a.kind)}${task?` · ${safe(a.priority||'normal')}`:''}</td><td>${safe(a.due_at?new Date(a.due_at).toLocaleString():'—')}</td><td>${task?(a.completed?'<span class="pill">Completed</span>':'<span class="pill warn">Open</span>'):safe(a.created_at?.slice(0,10)||'')}</td><td><button class="btn" onclick="wrEditRecord('activity','${safe(a.id)}')">Edit</button>${task?` <button class="btn" onclick="wrSetTaskState('${safe(a.id)}',${!a.completed})">${a.completed?'Reopen':'Complete'}</button>`:''}</td></tr>`).join('');
         const range=`${state.items.length?state.page*wrAuxSize+1:0}–${state.page*wrAuxSize+state.items.length} of ${state.total||0}`;
-        return heading+`<div class="toolbar"><span class="sub">${state.loading?'Loading…':range} · records</span></div>`+
+        const automationActions=task?`<div class="actions" style="justify-content:flex-end;margin-bottom:14px"><button type="button" class="btn" onclick="wrAutomationManager()">Automation rules</button><button type="button" class="btn" onclick="wrNotificationCenter()">Notifications</button></div>`:'';
+        const summary=task&&state.summary?`<div class="wr-kpis"><div class="wr-kpi"><div class="kpi-label">Open tasks</div><div class="kpi-value">${Number(state.summary.open||0)}</div></div><div class="wr-kpi"><div class="kpi-label">Overdue</div><div class="kpi-value">${Number(state.summary.overdue||0)}</div></div><div class="wr-kpi"><div class="kpi-label">Due today</div><div class="kpi-value">${Number(state.summary.due_today||0)}</div></div><div class="wr-kpi"><div class="kpi-label">My tasks</div><div class="kpi-value">${Number(state.summary.mine||0)}</div></div></div>`:'';
+        return heading+summary+automationActions+`<div class="toolbar"><span class="sub">${state.loading?'Loading…':range} · records</span></div>`+
           (state.error?`<p class="empty-note" role="alert">${safe(state.error)}</p>`:'')+
           `<div class="tablewrap"><table><thead><tr><th>Subject</th><th>Type</th><th>Due</th><th>Status / Date</th><th>Actions</th></tr></thead><tbody>${rows||`<tr><td colspan="5" class="empty">${state.loading?'Loading…':'No records found'}</td></tr>`}</tbody></table></div>`+
           `<div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn" onclick="wrChangeAuxPage('${kind}',-1)" ${state.page===0||state.loading?'disabled':''}>← Previous</button><span class="sub">Page ${state.page+1} of ${Math.max(1,Math.ceil((state.total||0)/wrAuxSize))}</span><button class="btn" onclick="wrChangeAuxPage('${kind}',1)" ${state.loading||(state.page+1)*wrAuxSize>=state.total?'disabled':''}>Next →</button></div>`;
@@ -1019,6 +1244,11 @@ try{
             filters:kind==='tasks'?{kind:'task'}:{},exclude:kind==='activities'?{kind:'task'}:{},search:state.search});
           if(page!==kind||request!==wrAuxRequest)return;
           state.items=result.records;state.total=result.total||0;state.loaded=true;
+          if(kind==='tasks'){
+            const {data:summary,error:summaryError}=await sb.rpc('wr_my_work_summary',{p_workspace_id:workspaceId});
+            if(summaryError)throw summaryError;
+            state.summary=summary;
+          }
         }catch(err){
           if(page!==kind||request!==wrAuxRequest)return;
           state.items=[];state.error=err?.message||'Unable to load records';console.error(err);

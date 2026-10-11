@@ -3,11 +3,18 @@
 const TABLES = Object.freeze({
   crm_contacts: ['id','name','email','company_id','status','lead_status','created_at'],
   crm_companies: ['id','name','industry','account_type','status','segment','territory_id','owner_id','parent_company_id','created_at'],
-  crm_deals: ['id','title','stage','company_id','contact_id','created_at'],
+  crm_deals: ['id','title','stage','company_id','contact_id','sales_process_id','created_at'],
   crm_activities: ['id','title','kind','company_id','contact_id','created_at'],
   crm_record_events: ['id','event_type','company_id','contact_id','created_at'],
   crm_company_emails: ['id','email','company_id','created_at'],
-  crm_cases: ['id','subject','status','priority','company_id','contact_id','created_at']
+  crm_cases: ['id','subject','status','priority','company_id','contact_id','created_at'],
+  crm_products: ['id','name','sku','item_type','active','created_at'],
+  crm_quotes: ['id','title','status','deal_id','created_at'],
+  crm_quote_items: ['id','quote_id','product_id'],
+  crm_sales_processes: ['id','name','active','created_at'],
+  crm_sales_documents: ['id','title','kind','status','deal_id','created_at'],
+  crm_subscriptions: ['id','name','status','company_id','created_at'],
+  crm_product_bundle_items: ['id','bundle_product_id','component_product_id']
 });
 const MAX_PAGE = 200;
 export function crmQuery({sb,workspaceId,table,page=0,pageSize=50,filters={},exclude={},search=''}) {
