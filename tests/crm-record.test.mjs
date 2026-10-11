@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {crmRecord} from '../app/crm-data.js';
+const workspaceId='2c67bdf6-f979-4dbd-87a8-c3f2c69d3bed';
+const id='23cbbd80-a13c-4f24-bb81-47a5c25a27aa';
+const calls=[];
+const db={from:table=>({select:columns=>({eq(key,value){calls.push([table,key,value]);return this},async maybeSingle(){return {data:{id,name:'Example'},error:null}}})})};
+assert.deepEqual(await crmRecord({sb:db,workspaceId,table:'crm_contacts',id}),{id,name:'Example'});
+assert.deepEqual(calls,[['crm_contacts','workspace_id',workspaceId],['crm_contacts','id',id]]);
+await assert.rejects(()=>crmRecord({sb:db,workspaceId,table:'crm_contacts',id:'123'}),/UUID/);
+await assert.rejects(()=>crmRecord({sb:db,workspaceId,table:'evil',id}),/Unknown/);
+const absent={from:()=>({select:()=>({eq(){return this},async maybeSingle(){return {data:null,error:null}}})})};
+await assert.rejects(()=>crmRecord({sb:absent,workspaceId,table:'crm_contacts',id}),/not found/);
+console.log('Direct record UUID tests passed');
