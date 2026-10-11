@@ -28,7 +28,7 @@ $("wr-seat-count").addEventListener("change",update);
 
 function step(n){for(let i=0;i<3;i++){$("wpanel"+i).classList.toggle("wcart-hide",i!==n);$("wstep"+i).classList.toggle("active",i===n);$("wstep"+i).classList.toggle("done",i<n)}}
 $("wnext0").onclick=()=>{if(chosen.size)step(1)};$("wback1").onclick=()=>step(0);$("wback2").onclick=()=>step(1);
-$("wdetails").onsubmit=e=>{e.preventDefault();if(!e.target.reportValidity())return;const d=new FormData(e.target),rows=[["Company",d.get("company")],["Customer",d.get("first")+" "+d.get("last")],["Email",d.get("email")],["Apps",String(chosen.size)],["Monthly equivalent",cash(price(chosen.size))],["Payment due", $("wcycle").value==="annual"?"Annual · "+cash(price(chosen.size)*12*(25/27)):"Monthly · "+cash(price(chosen.size))],["Additional team members",String(Math.max(0,Number($("wr-seat-count").value)||0))],["White-label applications",String(document.querySelectorAll("[data-white-app]:checked").length)]];const root=$("wreview");root.replaceChildren(...rows.map(([name,val])=>{const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");row.className="wcart-line";l.textContent=name;v.textContent=val;row.append(l,v);return row}));step(2)};renderWhite();
+$("wdetails").onsubmit=e=>{e.preventDefault();if(!e.target.reportValidity())return;const d=new FormData(e.target),rows=[["Company",d.get("company")],["Customer",d.get("first")+" "+d.get("last")],["Email",d.get("email")],["Apps",String(chosen.size)],["Monthly equivalent",cash(price(chosen.size))],["Payment due", $("wcycle").value==="annual"?"Annual · "+cash(price(chosen.size)*12*(25/27)):"Monthly · "+cash(price(chosen.size))],["Additional team members",String(Math.max(0,Number($("wr-seat-count").value)||0))],["White-label applications",String(document.querySelectorAll("[data-white-app]:checked").length)]];const root=$("wreview");root.replaceChildren(...rows.map(([name,val])=>{const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");row.className="wcart-line";l.textContent=name;v.textContent=val;row.append(l,v);return row}));step(2);document.dispatchEvent(new Event("workrelief:checkout-review-ready"))};renderWhite();
 })();</script><script src="https://js.stripe.com/v3/"></script><script>
 (function(){
 "use strict";
@@ -69,6 +69,7 @@ $("wr-start-payment").addEventListener("click",async()=>{
   button.hidden=true;status("Your secure Stripe payment form is ready.");
  }catch(err){status(err?.message||"Could not start payment",true);button.disabled=false;}
 });
+document.addEventListener("workrelief:checkout-review-ready",()=>{if(!mount && !$("wr-start-payment").disabled)$("wr-start-payment").click();});
 if(qp.get("checkout_return")==="1"){
  const box=document.createElement("p");box.className="wcart-muted";box.textContent="Thank you. Payment confirmation is processing. Sign in to your workrelief workspace to view updated access."; $("wr-payment-feedback").replaceChildren(box);
  const link=document.createElement("a");link.href=rt;link.textContent="Return to your workspace →";$("wr-payment-feedback").append(link);
