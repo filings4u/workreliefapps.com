@@ -53,7 +53,7 @@ $("wr-start-payment").addEventListener("click",async()=>{
   const white=Array.from(document.querySelectorAll("[data-white-app]:checked")).map(el=>el.dataset.whiteApp);
   const jwt=getSessionJwt();
   const wid=qp.get("workspace_id");
-  const request={apps,additional_seats:seats,white_label_apps:white,cycle:$("wcycle").value,email,return_path:rt};
+  const request={apps,additional_seats:seats,white_label_apps:white,cycle:$("wcycle").value,email,company_name:String(data.get("company")||""),buyer_name:[data.get("first"),data.get("last")].filter(Boolean).join(" "),return_path:rt};
   if(wid){if(!jwt)throw Error("Please sign in to the CRM first to upgrade your existing workspace");request.workspace_id=wid;}
   const headers={"content-type":"application/json"};if(jwt)headers.authorization="Bearer "+jwt;
   const resp=await fetch(base+"/workrelief-create-checkout",{method:"POST",headers,body:JSON.stringify(request)});
