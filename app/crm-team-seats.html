@@ -34,11 +34,9 @@ $('seats').addEventListener('input',update);
   const{data:team,error:seatError}=await sb.from('wr_workspace_team_entitlements').select('paid_seats,billing_state').eq('workspace_id',workspaceId).maybeSingle();
   if(seatError)throw seatError;if(!team||!['active','trialing'].includes(team.billing_state))throw Error('Activate your CRM subscription before purchasing seats.');
   paid=Number(team.paid_seats||0);if(paid>=100)throw Error('Your workspace has reached the 100-seat limit.');
-  const{data:orders,error:orderError}=await sb.from('wr_billing_orders').select('billing_cycle,application_codes,purchase_type').eq('workspace_id',workspaceId).eq('status','active').eq('purchase_type','applications').limit(50);
-  if(orderError)throw orderError;
-  const order=orders?.find(x=>x.application_codes?.includes('crm'));
-  if(!order)throw Error('A paid CRM subscription is required.');
-  cycle=order.billing_cycle==='annual'?'annual':'monthly';
+  const{data:billingCycle,error:cycleError}=await sb.rpc('wr_team_billing_cycle',{p_workspace_id:workspaceId});
+  if(cycleError)throw cycleError;
+  cycle=billingCycle==='annual'?'annual':'monthly';
   $('current').textContent=paid+' paid additional seat'+(paid===1?'':'s')+' already active. These remain unchanged.';
   $('seats').max=String(100-paid);$('purchase').hidden=false;$('feedback').hidden=true;update();
  }catch(error){status(error.message||'Unable to open your team checkout.',true)}
