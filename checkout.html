@@ -67,7 +67,7 @@ $("wr-start-payment").addEventListener("click",async()=>{
   if(!result.client_secret||!result.publishable_key)throw Error("Checkout is not configured yet");
   if(!window.Stripe)throw Error("Secure payment form did not load");
   if(checkout)throw Error("Payment form is already active. Edit details before starting another session.");
-  const stripe=window.Stripe(result.publishable_key);
+  const stripe=window.Stripe(result.publishable_key,{developerTools:{assistant:{enabled:false}}});
   checkout=stripe.initCheckoutElementsSdk({clientSecret:result.client_secret});
   $("wr-payment-element").replaceChildren();
   paymentElement=checkout.createPaymentElement();
