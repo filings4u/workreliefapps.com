@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#1768f5">
-<title>CRM branding | workrelief</title><link rel="icon" href="../assets/img/fav.png">
+<title>CRM branding | workfrelief</title><link rel="icon" href="../assets/img/fav.png">
 <style>
 :root{--blue:#1768f5;--ink:#10264b;--muted:#607494;--line:#d7e3f6;--bg:#f4f8ff;font-family:Inter,system-ui,Arial,sans-serif;color:var(--ink)}*{box-sizing:border-box}body{margin:0;background:var(--bg);min-height:100dvh}
 header{background:white;border-bottom:1px solid var(--line)}.head{max-width:1120px;margin:auto;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:20px}.head img{width:155px}.head a,.back{color:var(--blue);text-decoration:none;font-weight:700}
@@ -10,77 +10,78 @@ label{display:block;font-size:13px;font-weight:700;margin:18px 0 8px}input{displ
 @media(max-width:740px){main{padding:28px 15px 50px}.cards{grid-template-columns:1fr;gap:0}.card{padding:22px}.head{padding:14px 16px}}
 </style></head>
 <body><header><div class="head"><img src="../assets/img/logo.png" alt="workrelief"><a href="crm.html">← Back to CRM</a></div></header>
-<main><div class="kicker">WORKRELIEF CRM · BRAND SETTINGS</div><h1>Make your workspace your own.</h1><p>Choose how your CRM and team invitation emails represent your business.</p>
-<div id="load" class="notice">Checking workspace and white-label access…</div>
-<div id="locked" class="card hidden"><h2>Unlock your own branding</h2><p>Your CRM currently uses the standard workrelief design. Add the optional white-label bundle to personalize your workspace, logo, colors, and invitation emails.</p><div class="notice"><strong>White-label CRM:</strong> $10/month with one application. The bundle price adjusts with your total applications.</div><a id="upgrade" class="button" href="../checkout.html?apps=crm&white_label=all">See white-label pricing</a><p class="muted">Your existing account and CRM records are preserved. Branding unlocks after payment confirmation.</p></div>
+<main><div class="kicker">WORKFRELIEF APPS · WHITE LABEL BRANDING</div><h1>Make your workspace your own.</h1><p>Choose how your CRM and team invitation emails represent your business.</p>
+<section class="card"><h2>Choose an application</h2><label for="application">Application branding</label><select id="application" style="width:100%;padding:13px;border:1px solid #ccdbf0;border-radius:10px;background:white;font:inherit"></select><p class="muted">Each application has its own brand settings and portal color. White-label access is checked separately for every application.</p></section><div id="load" class="notice">Checking workspace and white-label access…</div>
+<div id="locked" class="card hidden"><h2>Unlock your own branding</h2><p>Your CRM currently uses the standard workfrelief design. Add the optional white-label bundle to personalize your workspace, logo, colors, and invitation emails.</p><div class="notice"><strong>White-label CRM:</strong> $10/month with one application. The bundle price adjusts with your total applications.</div><a id="upgrade" class="button" href="../checkout.html?apps=crm&white_label=all">See white-label pricing</a><p class="muted">Your existing account and CRM records are preserved. Branding unlocks after payment confirmation.</p></div>
 <div id="editor" class="hidden"><div class="cards"><section class="card"><h2>Your brand</h2><form id="brand-form">
 <label for="brand-name">Business name<input id="brand-name" maxlength="120" required placeholder="Your business name"></label>
 <label for="brand-color">Brand accent color<input id="brand-color" type="color" value="#1768f5" style="width:100px;height:54px;padding:6px"></label>
 <label for="brand-support">Support email<input id="brand-support" type="email" placeholder="support@yourbusiness.com"></label>
 <label for="brand-logo">Upload logo (PNG, JPEG or WebP; up to 2 MB)<input id="brand-logo" type="file" accept="image/png,image/jpeg,image/webp"></label>
 <button class="button" id="save-brand" type="submit">Save branding</button></form><div id="feedback" class="message" role="status" aria-live="polite"></div></section>
-<section class="card"><h2>Live preview</h2><div id="brand-preview"><img id="logo-preview" alt="Your business logo"><strong id="preview-name">Your business</strong><p>Your customers and teammates will see your business identity on invitations and branded workspace screens.</p></div><p class="muted">Email clients may cache images. Saved updates will appear in new invitation emails.</p></section></div></div>
+<section class="card"><h2>Live email preview</h2><div id="brand-preview" style="background:white"><img id="logo-preview" alt="Your business logo"><strong id="preview-name">Your business</strong><p id="preview-app">Account invitation</p><p>Welcome to your workspace. Use the button below to activate your account.</p><span id="preview-button" class="button" style="pointer-events:none;margin-top:8px">Activate my account</span><p style="font-size:12px;margin-top:26px">Secure account notification</p></div><p class="muted">Email clients may cache images. Saved updates will appear in new invitation emails.</p></section></div></div>
 </main>
 <script type="module">
 import{createClient}from 'https://esm.sh/@supabase/supabase-js@2';
 const sb=createClient('https://cqzwoskpgefacghdnuyz.supabase.co','sb_publishable_CoIoX7Pinqd2o4kJwqCTqA_RKmePPZt');
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
-let wid='',logoUrl='',userRole='';
+const colors={crm:'#1768F5',scheduling:'#12B8B1',forms:'#FF8419',desk:'#ED3192',hr:'#8839EC',training:'#247BFF',compliance:'#10C66E',time:'#8A3CF6',tasks:'#E59A32',projects:'#4C77D9',chat:'#7A4FDD',docs:'#5B77A6',sign:'#E68C45',billing:'#3F94CC',field:'#8A69D4',inventory:'#C77842',assets:'#3B81AC',workflow:'#8467D0',ai:'#9457E8'};
+let wid='',userRole='',app='crm',logoUrl='',entitlements=[],member=null,logoObjectUrl='';
 const msg=(v,error=false)=>{$('feedback').textContent=v;$('feedback').classList.toggle('error',error)};
-const preview=()=>{$('preview-name').textContent=$('brand-name').value||'Your business';$('brand-preview').style.borderLeftColor=$('brand-color').value;};
+const preview=()=>{const color=$('brand-color').value;$('preview-name').textContent=$('brand-name').value.trim()||'workfrelief';$('brand-preview').style.borderLeftColor=color;$('preview-button').style.backgroundColor=color;$('preview-button').style.borderColor=color;$('preview-app').textContent=app.toUpperCase()+' · Account invitation';};
 $('brand-name').addEventListener('input',preview);$('brand-color').addEventListener('input',preview);
-(async()=>{
- try{
-  const {data:{user},error}=await sb.auth.getUser();
-  if(error||!user){location.replace('login.html?next=app/crm.html');return}
-  const {data:members,error:memberError}=await sb.from('workspace_members').select('workspace_id,role,workspaces(name)').eq('user_id',user.id).limit(100);
-  if(memberError)throw memberError;if(!members?.length)throw Error('No workspace is linked to this account.');
-  const member=members.find(x=>x.workspace_id===q.get('workspace'))||members[0];wid=member.workspace_id;userRole=member.role;
-  const {data:entitlement,error:entError}=await sb.from('wr_application_entitlements').select('white_label_enabled,billing_state').eq('workspace_id',wid).eq('application_code','crm').maybeSingle();
-  if(entError)throw entError;
-  $('load').classList.add('hidden');
-  const unlocked=entitlement?.white_label_enabled===true&&['active','trialing'].includes(entitlement.billing_state);
-  if(!unlocked||!['owner','admin'].includes(userRole)){
-   $('locked').classList.remove('hidden');
-   if(unlocked)$('locked').querySelector('h2').textContent='Your branding is managed by an administrator';
-   if(unlocked)$('upgrade').classList.add('hidden');
-   else {
-     const checkout=new URL('../checkout.html',location.href);
-     checkout.searchParams.set('apps','crm');checkout.searchParams.set('white_label','all');checkout.searchParams.set('workspace_id',wid);
-     checkout.searchParams.set('return_to','app/crm-branding.html?workspace='+wid);
-     $('upgrade').href=checkout.toString();
-   }
-   return;
-  }
-  const {data:brand,error:brandError}=await sb.from('wr_workspace_branding').select('*').eq('workspace_id',wid).eq('application_code','crm').maybeSingle();
-  if(brandError)throw brandError;
-  $('brand-name').value=brand?.brand_name||member.workspaces?.name||'';
-  $('brand-color').value=brand?.primary_color||'#1768f5';
-  $('brand-support').value=brand?.support_email||'';
-  logoUrl=brand?.logo_url||'';
-  if(logoUrl){$('logo-preview').src=logoUrl;$('logo-preview').style.display='block'}
-  preview();$('editor').classList.remove('hidden');
- }catch(error){$('load').textContent=error.message||'Could not load branding settings.'}
-})();
+$('brand-logo').addEventListener('change',()=>{const file=$('brand-logo').files[0];if(logoObjectUrl)URL.revokeObjectURL(logoObjectUrl);if(file&&file.type.startsWith('image/')){logoObjectUrl=URL.createObjectURL(file);$('logo-preview').src=logoObjectUrl;$('logo-preview').style.display='block';}});
+async function showApplication(){
+ app=$('application').value;logoUrl='';$('brand-logo').value='';msg('');
+ $('load').classList.add('hidden');$('editor').classList.add('hidden');$('locked').classList.add('hidden');
+ const entitlement=entitlements.find(x=>x.application_code===app);
+ const unlocked=entitlement?.white_label_enabled===true&&['active','trialing'].includes(entitlement.billing_state);
+ const admin=['owner','admin'].includes(userRole);
+ if(!unlocked||!admin){
+  $('locked').classList.remove('hidden');
+  $('locked').querySelector('h2').textContent=unlocked?'Your branding is managed by an administrator':'Unlock '+app.toUpperCase()+' white-label branding';
+  $('locked').querySelector('p').textContent=unlocked?'Only workspace owners and administrators can update branding.':'Activate white-label for this application to unlock its custom logo, colors, support email, and branded notifications.';
+  $('upgrade').classList.toggle('hidden',unlocked);
+  const checkout=new URL('../checkout.html',location.href);checkout.searchParams.set('apps',app);checkout.searchParams.set('white_label','all');checkout.searchParams.set('workspace_id',wid);checkout.searchParams.set('return_to','app/crm-branding.html?workspace='+wid+'&app='+app);$('upgrade').href=checkout.toString();
+  return;
+ }
+ $('load').classList.remove('hidden');$('load').textContent='Loading '+app.toUpperCase()+' branding…';
+ const {data:brand,error}=await sb.from('wr_workspace_branding').select('*').eq('workspace_id',wid).eq('application_code',app).maybeSingle();
+ if(error){$('load').textContent=error.message;return}
+ $('brand-name').value=brand?.brand_name||'';$('brand-color').value=brand?.primary_color||colors[app];$('brand-support').value=brand?.support_email||'';
+ logoUrl=brand?.logo_url||'';$('logo-preview').removeAttribute('src');$('logo-preview').style.display='none';
+ if(logoUrl){$('logo-preview').src=logoUrl;$('logo-preview').style.display='block';}
+ preview();$('load').classList.add('hidden');$('editor').classList.remove('hidden');
+}
+$('application').addEventListener('change',showApplication);
+(async()=>{try{
+ const {data:{user},error}=await sb.auth.getUser();if(error||!user){location.replace('login.html?next=app/crm-branding.html');return}
+ const {data:members,error:memberError}=await sb.from('workspace_members').select('workspace_id,role').eq('user_id',user.id).limit(100);
+ if(memberError)throw memberError;if(!members?.length)throw Error('No workspace linked to your account.');
+ member=members.find(x=>x.workspace_id===q.get('workspace'))||members[0];wid=member.workspace_id;userRole=member.role;
+ const {data:grants,error:grantError}=await sb.from('wr_application_entitlements').select('application_code,white_label_enabled,billing_state').eq('workspace_id',wid);
+ if(grantError)throw grantError;entitlements=grants||[];
+ for(const key of Object.keys(colors)){const option=document.createElement('option');option.value=key;option.textContent=key[0].toUpperCase()+key.slice(1);$('application').append(option)}
+ $('application').value=colors[q.get('app')]?q.get('app'):'crm';await showApplication();
+}catch(error){$('load').textContent=error.message||'Unable to load white-label settings.'}})();
 $('brand-form').addEventListener('submit',async event=>{
- event.preventDefault();const button=$('save-brand');button.disabled=true;msg('Saving your brand…');
+ event.preventDefault();const button=$('save-brand');button.disabled=true;msg('Saving your branding…');
  try{
-  const file=$('brand-logo').files[0];
-  if(file){
-   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024)throw Error('Use a PNG, JPEG or WebP logo under 2 MB.');
-   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-   const name='workspaces/'+wid+'/crm/logo-'+crypto.randomUUID()+'.'+ext;
-   const {error:uploadError}=await sb.storage.from('workrelief-brand-assets').upload(name,file,{contentType:file.type,upsert:false});
-   if(uploadError)throw uploadError;
-   logoUrl=sb.storage.from('workrelief-brand-assets').getPublicUrl(name).data.publicUrl;
-  }
-  const record={workspace_id:wid,application_code:'crm',brand_name:$('brand-name').value.trim(),primary_color:$('brand-color').value,support_email:$('brand-support').value.trim(),logo_url:logoUrl,updated_at:new Date().toISOString()};
-  if(!record.brand_name)throw Error('Enter your business name.');
-  const {error:saveError}=await sb.from('wr_workspace_branding').upsert(record,{onConflict:'workspace_id,application_code'});
-  if(saveError)throw saveError;
-  if(logoUrl){$('logo-preview').src=logoUrl;$('logo-preview').style.display='block'}
-  preview();msg('Your workrelief branding settings have been saved.');
+ const ent=entitlements.find(x=>x.application_code===app);
+ if(!['owner','admin'].includes(userRole)||!ent?.white_label_enabled||!['active','trialing'].includes(ent.billing_state))throw Error('White-label purchase and administrator access required.');
+ const file=$('brand-logo').files[0];
+ if(file){if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024)throw Error('Use PNG, JPEG or WebP under 2 MB.');
+ const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+ const path='workspaces/'+wid+'/'+app+'/logo-'+crypto.randomUUID()+'.'+ext;
+ const {error:uploadError}=await sb.storage.from('workrelief-brand-assets').upload(path,file,{contentType:file.type,upsert:false});if(uploadError)throw uploadError;
+ logoUrl=sb.storage.from('workrelief-brand-assets').getPublicUrl(path).data.publicUrl;
+ }
+ const record={workspace_id:wid,application_code:app,brand_name:$('brand-name').value.trim(),primary_color:$('brand-color').value,support_email:$('brand-support').value.trim()||null,logo_url:logoUrl||null,updated_at:new Date().toISOString()};
+ if(!record.brand_name)throw Error('Enter a business name.');
+ const {error:saveError}=await sb.from('wr_workspace_branding').upsert(record,{onConflict:'workspace_id,application_code'});if(saveError)throw saveError;
+ if(logoUrl){$('logo-preview').src=logoUrl;$('logo-preview').style.display='block';}
+ preview();msg('Branding saved for '+app.toUpperCase()+'. New emails will use these settings.');
  }catch(error){msg(error.message||'Could not save branding.',true)}finally{button.disabled=false}
 });
 </script></body></html>
