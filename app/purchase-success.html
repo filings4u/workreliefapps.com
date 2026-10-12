@@ -33,25 +33,89 @@ function brand(){return palette[purchase?.apps?.[0]]||palette.crm}
 function rows(){return [['Applications',(purchase.apps||[]).join(', ')],['Additional team members',String(purchase.seats||0)],['White-label applications',(purchase.whiteLabelApps||[]).join(', ')||'None'],['Billing cycle',purchase.cycle==='annual'?'Yearly':'Monthly'],['Reference',purchase.reference],['Payment date',date(purchase.paidAt)],['Amount paid',format(purchase.amount,purchase.currency)]]}
 function receiptHTML(){const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));return '<!doctype html><html><head><title>workrelief payment receipt</title><style>body{font-family:Arial;background:#f6f9fd;padding:22px;color:#122441}.paper{max-width:660px;margin:auto;background:white;padding:35px;border-top:8px solid '+brand()+'} .line{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #ddd;padding:12px 0}small{color:#677994}@media print{body{padding:0;background:white}}</style></head><body><div class="paper"><img src="https://workreliefapps.com/assets/img/logo.png" alt="workrelief" style="width:190px;height:auto;display:block;margin-bottom:10px"><p style="font-weight:bold;color:'+brand()+';letter-spacing:1px">'+safe((purchase.apps?.[0]||'').toUpperCase())+'</p><h2>Payment receipt</h2>'+rows().map(r=>'<div class="line"><span>'+safe(r[0])+'</span><strong>'+safe(r[1])+'</strong></div>').join('')+'<p><small>Thank you for choosing workrelief. Keep this receipt for your records.</small></p></div></body></html>'}
 async function download(){
-if(!purchase)return;
-const C=window.jspdf?.jsPDF;if(!C){message('Receipt download is temporarily unavailable.',true);return}
-const pdf=new C({unit:'pt',format:'letter'}),accent=[1,3,5].map(i=>parseInt(brand().slice(i,i+2),16));
-const ink=[18,37,66],muted=[96,114,142];
-pdf.setFillColor(244,248,254);pdf.rect(0,0,612,792,'F');
-pdf.setFillColor(255,255,255);pdf.roundedRect(26,22,560,744,14,14,'F');
-pdf.setFillColor(...accent);pdf.rect(26,22,560,7,'F');
-try{const r=await fetch('https://workreliefapps.com/assets/img/logo.png');if(!r.ok)throw Error('logo unavailable');const blob=await r.blob(),url=URL.createObjectURL(blob),img=new Image();await new Promise((yes,no)=>{img.onload=yes;img.onerror=no;img.src=url});const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);const w=175;pdf.addImage(c.toDataURL('image/png'),'PNG',48,48,w,Math.min(66,w*img.naturalHeight/img.naturalWidth));URL.revokeObjectURL(url)}catch{pdf.setTextColor(...ink);pdf.setFont('helvetica','bold');pdf.setFontSize(23);pdf.text('workrelief',48,75)}
-pdf.setFont('helvetica','bold');pdf.setFontSize(11);pdf.setTextColor(...accent);pdf.text((purchase.apps?.[0]||'').toUpperCase(),48,126);
-pdf.setFontSize(11);pdf.setTextColor(...muted);pdf.text('PAYMENT RECEIPT',48,166);
-pdf.setFontSize(27);pdf.setTextColor(...ink);pdf.text('Payment confirmed',48,200);
-pdf.setFillColor(238,246,255);pdf.roundedRect(48,221,516,79,10,10,'F');
-pdf.setFontSize(10);pdf.setTextColor(...muted);pdf.text('TOTAL PAID',66,246);
-pdf.setFontSize(27);pdf.setTextColor(...ink);pdf.text(format(purchase.amount,purchase.currency),66,279);
-pdf.setFontSize(10);pdf.setTextColor(...accent);pdf.text('PAID',515,258,{align:'right'});
-pdf.setFontSize(13);pdf.setTextColor(...ink);pdf.text('Purchase details',48,340);
-let y=369;for(const [key,val] of rows().filter(r=>r[0]!=='Amount paid')){pdf.setDrawColor(224,232,244);pdf.line(48,y+20,564,y+20);pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(...muted);pdf.text(key,48,y);pdf.setFont('helvetica','bold');pdf.setTextColor(...ink);const lines=pdf.splitTextToSize(String(val),285);pdf.text(lines,276,y);y+=Math.max(38,lines.length*13+14)}
-pdf.setFillColor(246,249,254);pdf.roundedRect(48,678,516,52,7,7,'F');pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(...muted);pdf.text('Thank you for choosing workrelief.',64,701);pdf.text('workreliefapps.com',64,716);
-pdf.save('workrelief-receipt-'+purchase.reference.slice(0,14)+'.pdf')
+ if(!purchase)return;
+ const C=window.jspdf?.jsPDF;
+ if(!C){message('Receipt download is temporarily unavailable.',true);return}
+ const pdf=new C({unit:'pt',format:'letter'});
+ const accent=[1,3,5].map(i=>parseInt(brand().slice(i,i+2),16));
+ const ink=[16,38,75],muted=[101,119,147],line=[221,231,243];
+ const pale=accent.map(v=>Math.round(255-(255-v)*0.105));
+ const moneyPaid=format(purchase.amount,purchase.currency);
+ const apps=(purchase.apps||[]).map(v=>v.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
+ const white=(purchase.whiteLabelApps||[]).map(v=>v.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
+ const cycle=purchase.cycle==='annual'?'Annual':'Monthly';
+ const text=(value,x,y,size=10,bold=false,color=ink,options={})=>{
+   pdf.setFont('helvetica',bold?'bold':'normal');pdf.setFontSize(size);pdf.setTextColor(...color);
+   pdf.text(String(value??''),x,y,options);
+ };
+ const rounded=(x,y,w,h,r,color)=>{pdf.setFillColor(...color);pdf.roundedRect(x,y,w,h,r,r,'F')};
+ const horizontal=(x1,x2,y)=>{pdf.setDrawColor(...line);pdf.setLineWidth(.7);pdf.line(x1,y,x2,y)};
+ const wrap=(value,x,y,width,size=10,bold=false,color=ink,maxLines=2)=>{
+   pdf.setFont('helvetica',bold?'bold':'normal');pdf.setFontSize(size);
+   const lines=pdf.splitTextToSize(String(value||'—'),width).slice(0,maxLines);
+   lines.forEach((v,i)=>text(v,x,y+i*(size+3),size,bold,color));
+ };
+ // Full-page letter receipt: dynamic app accent, neutral status, printable white background.
+ pdf.setFillColor(255,255,255);pdf.rect(0,0,612,792,'F');
+ pdf.setFillColor(...accent);pdf.rect(0,0,612,9,'F');
+ // Use existing WorkRelief logo with a vector/text fallback for offline download.
+ try{
+   const response=await fetch('/assets/img/logo.png',{cache:'force-cache'});
+   if(!response.ok)throw Error('Logo unavailable');
+   const blob=await response.blob(),url=URL.createObjectURL(blob),img=new Image();
+   try{
+     await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});
+     const canvas=document.createElement('canvas');
+     canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+     canvas.getContext('2d').drawImage(img,0,0);
+     const w=175,h=Math.min(61,w*img.naturalHeight/img.naturalWidth);
+     pdf.addImage(canvas.toDataURL('image/png'),'PNG',42,36,w,h);
+   }finally{URL.revokeObjectURL(url)}
+ }catch{text('workrelief',42,67,25,true,ink)}
+ text('PAYMENT RECEIPT',570,51,10,true,accent,{align:'right'});
+ text(purchase.reference||'—',570,69,10,true,ink,{align:'right'});
+ horizontal(42,570,112);
+ // Confirmation hero.
+ rounded(42,133,528,113,12,pale);
+ rounded(57,150,36,36,18,accent);
+ text('✓',75,175,21,true,[255,255,255],{align:'center'});
+ text('Payment confirmed',107,165,23,true,ink);
+ text('Your WorkRelief subscription payment is complete.',107,186,10,false,muted);
+ text('TOTAL PAID',58,218,9,true,muted);
+ text(moneyPaid,570,224,25,true,ink,{align:'right'});
+ // Application chips are text-first to accommodate variable application bundles.
+ text('PURCHASE SUMMARY',42,280,10,true,accent);
+ text('Applications',42,310,10,false,muted);
+ wrap(apps.length?apps.join(', '):'None',235,310,325,11,true,ink,2);
+ horizontal(42,570,343);
+ text('Additional team members',42,363,10,false,muted);
+ text(String(purchase.seats||0),570,363,11,true,ink,{align:'right'});
+ horizontal(42,570,379);
+ text('White Label applications',42,399,10,false,muted);
+ wrap(white.length?white.join(', '):'None',235,399,325,10,true,ink,2);
+ horizontal(42,570,432);
+ text('Billing frequency',42,452,10,false,muted);
+ text(cycle,570,452,11,true,ink,{align:'right'});
+ horizontal(42,570,468);
+ // Clear metadata panel, no guessed next renewal date or tax breakdown.
+ text('PAYMENT DETAILS',42,502,10,true,accent);
+ rounded(42,516,528,120,10,[247,250,254]);
+ text('Payment status',58,542,10,false,muted);
+ text('PAID',554,542,10,true,accent,{align:'right'});
+ horizontal(58,554,552);
+ text('Payment date',58,573,10,false,muted);
+ text(date(purchase.paidAt),554,573,10,true,ink,{align:'right'});
+ horizontal(58,554,585);
+ text('Receipt reference',58,610,10,false,muted);
+ text(purchase.reference||'—',554,610,10,true,ink,{align:'right'});
+ // Low-noise disclosure and branded footer.
+ rounded(42,654,528,59,9,pale);
+ text('Subscription information',57,673,10,true,ink);
+ wrap('Your subscription renews according to the selected billing frequency. Keep this receipt for your records.',57,690,494,9,false,muted,2);
+ horizontal(42,570,736);
+ text('workrelief  ·  One platform. Less busywork.',42,758,9,false,muted);
+ text('workreliefapps.com',570,758,9,true,accent,{align:'right'});
+ pdf.save('workrelief-receipt-'+(purchase.reference||'receipt').replace(/[^a-zA-Z0-9-]/g,'')+'.pdf');
 }
 function show(data){purchase=data;document.documentElement.style.setProperty('--accent',brand());$('title').textContent='Your payment was successful!';$('introduction').textContent='Thank you for choosing workrelief. Here is your confirmed purchase summary.';message('');$('details').replaceChildren(detail('Applications',(data.apps||[]).join(', ')),detail('Additional team members',data.seats||0),detail('White-label applications',(data.whiteLabelApps||[]).length),detail('Billing frequency',data.cycle==='annual'?'Yearly':'Monthly'));$('payment').replaceChildren(detail('Status','Paid'),detail('Date',date(data.paidAt)),detail('Reference',data.reference));$('amount').textContent=format(data.amount,data.currency);$('email-state').textContent=(data.receiptSent?'Receipt sent.':'Receipt delivery is processing.')+' '+(data.invitationSent?'Account invitation sent.':'Account invitation is processing.');const destination=new URLSearchParams(location.search).get('return_to')||'app/purchase-apps.html';
 const next=$('existing-next');
