@@ -1,7 +1,7 @@
 
 /* Rebuilt WorkRelief dialogs — visual reference: approved Add company screenshot. */
 :root{--wm-blue:#075cf5;--wm-ink:#0b1e43;--wm-muted:#7488ac;--wm-border:#dce6f5}
-html:has(.wm-overlay),body:has(.wm-overlay){overflow:hidden!important}
+html:has(.wm-overlay:not([hidden]):not(.hidden)),body:has(.wm-overlay:not([hidden]):not(.hidden)){overflow:hidden!important}
 .wm-overlay{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:clamp(9px,4.35vh,46px);background:rgba(18,34,60,.64);backdrop-filter:blur(2px)}
 .wm-dialog{position:relative;display:flex;flex-direction:column;width:min(992px,calc(100vw - 32px));max-height:calc(100dvh - 40px);height:min(1010px,calc(100dvh - 92px));background:#fbfcff;border:1px solid #e0e8f4;border-radius:11px;box-shadow:0 25px 80px #06193645;overflow:hidden;color:var(--wm-ink)}
 .wm-dialog.wm-compact{height:auto;max-height:calc(100dvh - 40px);width:min(640px,calc(100vw - 32px))}
