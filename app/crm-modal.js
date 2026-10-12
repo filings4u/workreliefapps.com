@@ -1,4 +1,14 @@
 /* New WorkRelief modal DOM. No retired drawer/wizard markup is reused. */
+function wrModalIcon(i){
+ const paths=[
+ '<rect x="4" y="7" width="16" height="15" rx="1"/><path d="M9 22V3h6v19M7 11h2m-2 4h2m6-4h2m-2 4h2"/>',
+ '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+ '<path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/>',
+ '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+ '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>'
+ ];
+ return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">'+paths[i%5]+'</svg>';
+}
 function wrEnhanceDrawer(){
  const dialog=document.getElementById('drawer'), overlay=document.getElementById('back');
  if(!dialog||!overlay)return;
@@ -45,7 +55,7 @@ function wrEnhanceDrawer(){
     s.classList.add('wm-section');s.classList.remove('wr-form-section');
     const titleEl=s.querySelector(':scope > h3');const descEl=s.querySelector(':scope > p.sub');
     const top=document.createElement('div');top.className='wm-section-head';
-    const icon=document.createElement('span');icon.className='wm-section-symbol';icon.textContent=['▦','♟','♧','⌖','▤'][i%5];
+    const icon=document.createElement('span');icon.className='wm-section-symbol';icon.innerHTML=wrModalIcon(i);
     const texts=document.createElement('div');
     if(titleEl)texts.append(titleEl);if(descEl){descEl.classList.add('wm-section-description');texts.append(descEl)}
     top.append(icon,texts);s.prepend(top);sections.push(s);
@@ -62,7 +72,7 @@ function wrEnhanceDrawer(){
    const tabs=document.createElement('nav');tabs.className='wm-tabs';tabs.setAttribute('aria-label','Form sections');
    sections.forEach((s,i)=>{
     const t=document.createElement('button');t.type='button';t.className='wm-tab'+(i===0?' active':'');
-    const ic=document.createElement('span');ic.className='wm-tab-icon';ic.textContent=['▦','♟','♧','⌖','▤'][i%5];
+    const ic=document.createElement('span');ic.className='wm-tab-icon';ic.innerHTML=wrModalIcon(i);
     t.append(ic,document.createTextNode((s.querySelector('h3')?.textContent||'Section '+(i+1)).replace(/^\d+\.\s*/,'')));
     t.onclick=()=>{s.scrollIntoView({behavior:'smooth',block:'start'});[...tabs.children].forEach(x=>x.classList.toggle('active',x===t))};
     tabs.append(t);
