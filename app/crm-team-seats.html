@@ -49,7 +49,7 @@ $('prepare').addEventListener('click',async()=>{
   const res=await fetch('https://cqzwoskpgefacghdnuyz.supabase.co/functions/v1/workrelief-create-checkout',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+session.access_token},body:JSON.stringify({purchase_type:'team_seats',workspace_id:workspaceId,additional_seats:qty})});
   const info=await res.json().catch(()=>({}));if(!res.ok)throw Error(info.error||'Unable to begin secure payment');
   if(!window.Stripe)throw Error('Secure payment fields did not load');
-  checkout=window.Stripe(info.publishable_key).initCheckoutElementsSdk({clientSecret:info.client_secret});
+  checkout=window.Stripe(info.publishable_key,{developerTools:{assistant:{enabled:false}}}).initCheckoutElementsSdk({clientSecret:info.client_secret});
   element=checkout.createPaymentElement();element.mount('#secure-fields');
   const actions=await checkout.loadActions();if(actions.type!=='success')throw Error(actions.error?.message||'Unable to open payment form');
   loaded=actions.actions;$('pay').hidden=false;$('pay').disabled=false;$('pay').textContent='Pay '+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(info.price_cents/100)+' →';
