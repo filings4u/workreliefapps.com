@@ -410,8 +410,28 @@ try{
     if(memberError)throw memberError;
     if(!members?.length){deny('Your account has no assigned workspace. Ask your administrator to grant access.');}
     else{
-      const member=members[0];
+      // Select a workspace only from the authenticated user's verified memberships.
+      const requestedWorkspace=new URLSearchParams(location.search).get('workspace');
+      const member=members.find(m=>m.workspace_id===requestedWorkspace)||members[0];
       const label=document.querySelector('.sidebar .workspace');
+      if(members.length>1&&label){
+        const selector=document.createElement('select');
+        selector.id='wr-workspace-switcher';
+        selector.setAttribute('aria-label','Choose business workspace');
+        selector.style.cssText='display:block;width:100%;max-width:100%;margin:10px 0 12px;padding:10px 30px 10px 10px;border:1px solid rgba(135,160,200,.38);border-radius:10px;background:#fff;color:#122c55;font:inherit;font-size:13px;cursor:pointer';
+        for(const item of members){
+          const option=document.createElement('option');option.value=item.workspace_id;
+          option.textContent=item.workspaces?.name||'My workspace';
+          option.selected=item.workspace_id===member.workspace_id;selector.append(option);
+        }
+        selector.addEventListener('change',()=>{
+          const selected=members.find(m=>m.workspace_id===selector.value);
+          if(!selected)return;
+          const url=new URL(location.href);url.searchParams.set('workspace',selected.workspace_id);
+          location.assign(url.pathname+url.search);
+        });
+        label.insertAdjacentElement('afterend',selector);
+      }
       if(label){label.textContent=(member.workspaces?.name||'Workspace')+' · '+member.role;label.style.display='block';}
       const account=document.getElementById('wr-current-user');if(account)account.textContent=user.email||'Signed in';
        const displayName=user.user_metadata?.full_name||user.user_metadata?.name||user.email?.split('@')[0]||'My Account';
