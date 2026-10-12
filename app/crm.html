@@ -326,6 +326,21 @@ html:has(.wm-overlay),body:has(.wm-overlay){overflow:hidden!important}
 .wm-automation-dialog .wm-section form .field{min-width:0}
 .wm-automation-dialog .wm-section form :is(input:not([type=checkbox]),select,textarea){box-sizing:border-box;width:100%;max-width:100%}
 @media(max-width:720px){.wm-dialog.wm-automation-dialog{width:100%;height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}.wm-automation-dialog .wm-scroll{padding:15px 16px}.wm-automation-dialog .wm-section{padding:16px}.wm-automation-dialog .wm-section form{grid-template-columns:1fr}}
+
+/* Branded email center — same modal footprint as Add Company. */
+.wm-dialog.wm-email-dialog{width:min(992px,calc(100vw - 32px));height:min(1010px,calc(100dvh - 92px));max-height:calc(100dvh - 40px)}
+.wm-email-dialog .wm-scroll{flex:1;min-height:0;overflow-y:auto;padding:20px 28px}
+.wm-email-dialog .wm-section{min-width:0;padding:22px 27px}
+.wm-email-dialog .wr-mail-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px;align-items:start;width:100%}
+.wm-email-dialog .wr-mail-main,.wm-email-dialog .wr-mail-side{min-width:0}
+.wm-email-dialog .wr-mail-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.wm-email-dialog .wr-mail-template-card{min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-wrap:anywhere}
+.wm-email-dialog .wr-mail-card-copy{width:100%;min-width:0;display:flex;flex-direction:column;gap:8px}
+.wm-email-dialog .wr-mail-section-title{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.wm-email-dialog .wr-mail-section-title .btn{flex:none}
+.wm-email-dialog .wr-mail-brand-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px}
+@media(max-width:800px){.wm-email-dialog .wr-mail-layout{grid-template-columns:1fr}.wm-email-dialog .wr-mail-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.wm-dialog.wm-email-dialog{width:100%;height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}.wm-email-dialog .wm-scroll{padding:15px 16px}.wm-email-dialog .wm-section{padding:16px}.wm-email-dialog .wr-mail-card-grid{grid-template-columns:1fr}.wm-email-dialog .wr-mail-section-title{flex-wrap:wrap}}
 </style><script id="wm-modal-inline-js">/* New WorkRelief modal DOM. No retired drawer/wizard markup is reused. */
 function wrModalIcon(i){
  const paths=[
@@ -448,6 +463,18 @@ function wrEnhanceDrawer(){
    const section=document.createElement('section');section.className='wm-section';
    for(const node of original)if(node.nodeType===1&&node!==eyebrow&&node!==heading&&node!==description)section.append(node);
    scroll.append(section);dialog.append(scroll);
+   const mailCenter=section.querySelector('.wr-mail-center');
+   if(mailCenter){
+    dialog.classList.remove('wm-compact');dialog.classList.add('wm-email-dialog');
+    const intro=mailCenter.querySelector('.wr-mail-intro');
+    const mailHeading=intro?.querySelector('h2'),mailEyebrow=intro?.querySelector('.eyebrow'),mailDescription=intro?.querySelector('p');
+    if(mailHeading)h.textContent=mailHeading.textContent;
+    if(mailEyebrow)label.textContent=mailEyebrow.textContent;
+    if(mailDescription)summary.textContent=mailDescription.textContent;
+    intro?.remove();
+    while(mailCenter.firstChild)section.insertBefore(mailCenter.firstChild,mailCenter);
+    mailCenter.remove();
+   }
    if(isSales){
     const actions=[...section.children].filter(node=>node.matches('.actions'));
     if(actions.length){
