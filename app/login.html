@@ -134,7 +134,8 @@ const sb=createClient('https://cqzwoskpgefacghdnuyz.supabase.co','sb_publishable
 const email=document.getElementById('auth-email'),password=document.getElementById('auth-password'),status=document.getElementById('auth-status'),submit=document.getElementById('auth-submit');
 const say=(message)=>{status.textContent=message};
 const next=new URLSearchParams(location.search).get('next');
-const destination=next==='app/crm.html'?new URL('../app/crm.html',location.href).href:new URL('crm.html',location.href).href;
+const inviteTicket=new URLSearchParams(location.search).get('invite');
+const destination=inviteTicket&&/^[a-f0-9]{64}$/i.test(inviteTicket)?new URL('crm-team.html?invite='+encodeURIComponent(inviteTicket),location.href).href:next==='app/crm-team.html'?new URL('crm-team.html'+(inviteTicket?'?invite='+encodeURIComponent(inviteTicket):''),location.href).href:new URL('crm.html',location.href).href;
 const form=document.getElementById('auth-form');
 function busy(value){submit.disabled=value;document.getElementById('auth-reset').disabled=value}
 const activation=document.getElementById('activation-form');
