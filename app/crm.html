@@ -329,7 +329,7 @@ function wrEnhanceDrawer(){
   form.classList.remove('formgrid','wr-floating-company-form','wr-floating-regular-form');
   form.classList.add('wm-form');
   if(title==='Add company'){
- const names=[['name','website','industry','employee_count','segment','tags_text'],['primary_contact_name','primary_contact_phone','email'],['parent_company_id','owner_id','account_type','territory_id'],['address_line1','address_line2','city','state_region','postal_code','country'],['notes','description','annual_revenue','source','status','industry_naics_code','custom_fields_text','phone']];
+ const names=[['name','website','industry','employee_count','segment','tags_text'],['primary_contact_name','primary_contact_phone','email'],['parent_company_id','owner_id','account_type','territory_id'],['address_line1','address_line2','city','state_region','postal_code','country'],['notes','description','annual_revenue','source','status','industry_naics_code','phone']];
  const headings=['Company basics','Primary contact','Relationships','Address','Notes & insights'];
  const descriptions=['Add core information about the company.','The first person is added directly to Contacts and set as the primary account contact.','Assign an owner and territory, and categorize the account.','Add the company address.','Save helpful background information.'];
  const prior=[...form.querySelectorAll(':scope > .wr-form-section')];
@@ -342,7 +342,7 @@ function wrEnhanceDrawer(){
   items.forEach(name=>{const input=form.querySelector('[name="'+name+'"]');const field=input?.closest('.field');if(field&&!grid.contains(field))grid.append(field)});
   section.append(h,p,grid);return section
  });
- const extras=allFields.filter(f=>!cards.some(c=>c.contains(f)));extras.forEach(f=>cards[4].lastChild.append(f));
+ const extras=allFields.filter(f=>!cards.some(c=>c.contains(f)) && !f.querySelector('[name="custom_fields_text"]'));extras.forEach(f=>cards[4].lastChild.append(f));
  prior[0]?.before(...cards);prior.forEach(x=>x.remove());
 }
   const oldSections=[...form.querySelectorAll(':scope > .wr-form-section')];
@@ -375,6 +375,15 @@ function wrEnhanceDrawer(){
     t.onclick=()=>{s.scrollIntoView({behavior:'smooth',block:'start'});[...tabs.children].forEach(x=>x.classList.toggle('active',x===t))};
     tabs.append(t);
    });dialog.append(tabs);
+   const updateActive=()=>{
+    const scroller=dialog.querySelector('.wm-scroll');if(!scroller)return;
+    const boundary=scroller.getBoundingClientRect().top+Math.min(90,scroller.clientHeight*.24);
+    let active=0;sections.forEach((section,index)=>{if(section.getBoundingClientRect().top<=boundary)active=index});
+    if(scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-6)active=sections.length-1;
+    [...tabs.children].forEach((tab,index)=>{const selected=index===active;tab.classList.toggle('active',selected);tab.setAttribute('aria-current',selected?'step':'false')});
+   };
+   scroll.addEventListener('scroll',updateActive,{passive:true});
+   requestAnimationFrame(updateActive);
   }
   if(!footer){
    const submit=form.querySelector('button[type=submit]');
