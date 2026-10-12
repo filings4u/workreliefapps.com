@@ -296,6 +296,26 @@ html:has(.wm-overlay),body:has(.wm-overlay){overflow:hidden!important}
 .wm-scroll .wm-form{width:100%}
 .wm-form .wm-section>.wm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 26px}
 @media(max-width:720px){.wm-form .wm-section>.wm-grid{grid-template-columns:1fr}}
+
+/* Sales workspace dialogs follow the same full-width modal design as company forms. */
+.wm-dialog.wm-sales-dialog{width:min(992px,calc(100vw - 32px));height:auto;max-height:calc(100dvh - 92px)}
+.wm-sales-dialog .wm-header{padding-bottom:3px}
+.wm-sales-dialog .wm-scroll{padding-top:20px;padding-bottom:25px;max-height:min(70dvh,670px)}
+.wm-sales-dialog .wm-section{padding:22px 27px}
+.wm-sales-dialog .wm-sales-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 19px}
+.wm-sales-dialog .wm-sales-actions .btn{min-height:41px;padding:9px 16px;margin:0;border-radius:8px;background:#075cf5;color:#fff;border:1px solid #075cf5;font-weight:700}
+.wm-sales-dialog .wm-sales-table{width:100%;max-width:100%;overflow-x:auto;border:1px solid #dfe8f5;border-radius:10px}
+.wm-sales-dialog .wm-sales-table table{border-collapse:collapse;width:100%;font-size:13px}
+.wm-sales-dialog .wm-sales-table th{padding:13px 17px;text-align:left;background:#f6f8fc;color:#7183a1;font-size:11px;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid #e0e8f5;white-space:nowrap}
+.wm-sales-dialog .wm-sales-table td{padding:15px 17px;text-align:left;border-bottom:1px solid #e8eef8;vertical-align:middle}
+.wm-sales-dialog .wm-sales-table tbody tr:last-child td{border-bottom:none}
+.wm-sales-dialog .wm-sales-table td small{display:block;color:#778bac;margin-top:4px}
+.wm-sales-dialog .wm-sales-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 18px}
+.wm-sales-dialog .wm-sales-metrics .wr-account-fact{display:flex;flex-direction:column;gap:7px;min-width:0;padding:18px 20px;background:#f8faff;border:1px solid #e0e8f5;border-radius:9px}
+.wm-sales-dialog .wm-sales-metrics .wr-account-fact span{display:block;color:#647b9d;font-size:12px;font-weight:650}
+.wm-sales-dialog .wm-sales-metrics .wr-account-fact strong{display:block;color:#0d2452;font-size:24px;font-weight:800;letter-spacing:-.5px;overflow-wrap:anywhere}
+.wm-sales-dialog .wm-section>.sub{display:block;color:#7388a9;margin-top:14px;line-height:1.55}
+@media(max-width:720px){.wm-dialog.wm-sales-dialog{width:100%;max-height:calc(100dvh - 16px)}.wm-sales-dialog .wm-scroll{max-height:75dvh}.wm-sales-dialog .wm-section{padding:16px}.wm-sales-dialog .wm-sales-metrics{grid-template-columns:1fr}.wm-sales-dialog .wm-sales-metrics .wr-account-fact strong{font-size:20px}.wm-sales-dialog .wm-sales-table th,.wm-sales-dialog .wm-sales-table td{padding:11px}}
 </style><script id="wm-modal-inline-js">/* New WorkRelief modal DOM. No retired drawer/wizard markup is reused. */
 function wrModalIcon(i){
  const paths=[
@@ -405,10 +425,20 @@ function wrEnhanceDrawer(){
   }
   scroll.append(form);dialog.append(scroll);
  }else{
-   dialog.classList.add('wm-compact');
+   const isSales=/^(SALES CATALOG|SALES QUOTES|SALES FORECAST|SALES PERFORMANCE|SALES CONFIGURATION|SALES DOCUMENTS|RECURRING REVENUE)$/.test(category);
+   dialog.classList.add(isSales?'wm-sales-dialog':'wm-compact');
    const section=document.createElement('section');section.className='wm-section';
    for(const node of original)if(node.nodeType===1&&node!==eyebrow&&node!==heading&&node!==description)section.append(node);
    scroll.append(section);dialog.append(scroll);
+   if(isSales){
+    const actions=[...section.children].filter(node=>node.matches('.actions'));
+    if(actions.length){
+      const toolbar=document.createElement('div');toolbar.className='wm-sales-actions';
+      actions[0].before(toolbar);actions.forEach(node=>{while(node.firstChild)toolbar.append(node.firstChild);node.remove()});
+    }
+    section.querySelectorAll('.wr-account-grid').forEach(grid=>grid.classList.add('wm-sales-metrics'));
+    section.querySelectorAll('.tablewrap').forEach(table=>table.classList.add('wm-sales-table'));
+   }
  }
  const footer=dialog.querySelector('.wm-form > .wm-footer');
  if(footer){footer.remove();dialog.append(footer);footer.querySelectorAll('button').forEach(b=>{if(b.type==='submit')b.addEventListener('click',()=>{if(form.requestSubmit)form.requestSubmit();else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))})})}
