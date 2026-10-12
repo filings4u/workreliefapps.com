@@ -423,6 +423,14 @@ function wrEnhanceDrawer(){
    if(button&&/^Add company$/i.test(title))button.textContent='Save company';
    finalFooter.remove();form.append(finalFooter);
   }
+  // Only the pinned footer may contain a Cancel action.
+  // Remove redundant form-level Cancel buttons without disturbing save/submit.
+  const pinned=form.querySelector(':scope > .wm-footer');
+  if(pinned){
+   form.querySelectorAll('button').forEach(button=>{
+    if(!pinned.contains(button)&&button.type!=='submit'&&/^cancel$/i.test(button.textContent.trim()))button.remove();
+   });
+  }
   scroll.append(form);dialog.append(scroll);
  }else{
    const isSales=/^(SALES CATALOG|SALES QUOTES|SALES FORECAST|SALES PERFORMANCE|SALES CONFIGURATION|SALES DOCUMENTS|RECURRING REVENUE)$/.test(category);
