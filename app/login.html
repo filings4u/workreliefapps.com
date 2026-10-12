@@ -73,6 +73,11 @@ body{margin:0;min-height:100vh}
       <div class="reset-row"><button id="auth-reset" class="link-button" type="button">Forgot password?</button></div>
       <button id="auth-submit" class="button button-primary" type="submit">Sign in →</button>
     </form>
+    <form id="activation-form" hidden style="display:none;gap:16px">
+      <label style="display:block;font-weight:700">Create password<input id="activation-password" type="password" autocomplete="new-password" minlength="12" required placeholder="At least 12 characters" style="display:block;width:100%;margin-top:9px;padding:15px;border:1px solid #cedbf0;border-radius:11px"></label>
+      <label style="display:block;font-weight:700">Confirm password<input id="activation-confirm" type="password" autocomplete="new-password" minlength="12" required placeholder="Confirm your password" style="display:block;width:100%;margin-top:9px;padding:15px;border:1px solid #cedbf0;border-radius:11px"></label>
+      <button id="activation-submit" class="button button-primary" type="submit">Create password and continue →</button>
+    </form>
     <p id="auth-status" role="status" aria-live="polite"></p>
     <p class="form-footer">Secure workspace access.</p>
   </div>
@@ -87,10 +92,34 @@ const next=new URLSearchParams(location.search).get('next');
 const destination=next==='app/crm.html'?new URL('../app/crm.html',location.href).href:new URL('crm.html',location.href).href;
 const form=document.getElementById('auth-form');
 function busy(value){submit.disabled=value;document.getElementById('auth-reset').disabled=value}
+const activation=document.getElementById('activation-form');
+const params=new URLSearchParams(location.search), hash=new URLSearchParams(location.hash.slice(1));
+const invited=params.get('setup')==='1'||hash.get('type')==='invite'||params.get('type')==='invite';
+function showActivation(){
+ form.hidden=true;activation.hidden=false;activation.style.display='grid';
+ document.querySelector('.form-inner h2').textContent='Create your password.';
+ document.querySelector('.form-intro').textContent='Set a password to finish activating your workrelief account.';
+ document.title='Activate your account | workrelief';say('');
+}
+sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session&&invited)showActivation()});
 try{
  const{data:{session}}=await sb.auth.getSession();
- if(session)location.replace(destination);
+ if(session){if(invited)showActivation();else location.replace(destination);}
+ else if(invited)say('Checking your invitation. If expired, request a new invitation.');
 }catch(error){say('Could not connect to authentication. Please try again shortly.')}
+activation.addEventListener('submit',async event=>{
+ event.preventDefault();if(!activation.reportValidity())return;
+ const password=document.getElementById('activation-password').value;
+ if(password!==document.getElementById('activation-confirm').value){say('Passwords do not match.');return}
+ const button=document.getElementById('activation-submit');button.disabled=true;say('Activating your account…');
+ try{
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session)throw Error('Your invitation has expired. Request a new invitation.');
+  const{error}=await sb.auth.updateUser({password});
+  if(error)throw error;
+  location.replace(destination);
+ }catch(error){say(error.message||'Could not create password.');button.disabled=false}
+});
 form.addEventListener('submit',async event=>{
  event.preventDefault();if(!form.reportValidity())return;
  busy(true);say('Signing in…');
