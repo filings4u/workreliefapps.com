@@ -360,6 +360,15 @@ html:has(#back.show),body:has(#back.show){overflow:hidden!important}
 #back.show #drawer .wr-approved-company .wr-floating-tabs{margin-top:22px!important}
 #back.show #drawer .wr-approved-company>.wr-drawer-footer{position:sticky!important;bottom:0!important}
 @media(max-width:720px){#back.show #drawer .wr-approved-company :is(.wr-approved-basics,.wr-approved-primary,.wr-approved-relationships)>.wr-form-pair{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}#back.show #drawer .wr-approved-company .wr-approved-primary>.wr-form-pair:last-child{max-width:none!important}#back.show #drawer .wr-approved-company .wr-form-section{padding:15px!important}}
+</style><style id="wr-regular-modal-card-consistency">
+/* One WorkRelief CRM section-card system for ordinary create/edit popups. */
+#back.show #drawer form.wr-floating-regular-form:has(>.wr-generic-modal-section){display:flex!important;flex-direction:column!important;gap:18px!important}
+#back.show #drawer form.wr-floating-regular-form>.wr-generic-modal-section{width:100%!important;grid-column:1/-1!important;padding:24px 26px!important;margin:0!important;border:1px solid #e1e9f5!important;border-radius:10px!important;background:#fff!important}
+#back.show #drawer .wr-generic-modal-section>.wr-form-pair{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:13px 26px!important}
+#back.show #drawer .wr-generic-modal-section>.wr-form-pair>.field{min-width:0!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;border-radius:0!important}
+#back.show #drawer .wr-generic-modal-section>h3{margin:0 0 3px!important;color:#0e2147!important;font-size:17px!important;font-weight:800!important}
+#back.show #drawer .wr-generic-modal-section>.sub{margin:0 0 20px!important;color:#7186a7!important;font-size:12px!important}
+@media(max-width:720px){#back.show #drawer .wr-generic-modal-section>.wr-form-pair{grid-template-columns:minmax(0,1fr)!important}#back.show #drawer form.wr-floating-regular-form>.wr-generic-modal-section{padding:16px!important}}
 </style></head><body class="wr-auth-pending"><div id="wr-auth-screen" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#f7f9fc;color:#18243b;font:600 16px system-ui;padding:24px;text-align:center">Verifying secure workspace access…</div><div class="app"><aside class="sidebar"><div class="brand"><span class="brandmark">w</span>workrelief <small>crm</small></div><div class="workspace">◈ &nbsp; Demo Workspace <span>⌄</span></div><div class="nav"><div class="navcap">WORKSPACE</div><button data-page="dashboard" class="on"><i>▦</i> Overview</button><button data-page="leads"><i>◉</i> Leads</button><button data-page="contacts"><i>♙</i> Contacts</button><button data-page="companies"><i>▤</i> Companies</button><button data-page="pipeline"><i>▥</i> Deals & Pipeline</button><button data-page="tasks"><i>☑</i> My Work</button><div class="navcap">PRODUCTIVITY</div><button data-page="activities"><i>◷</i> Activities</button><button data-page="reports"><i>▧</i> Reports</button><button data-page="settings"><i>⚙</i> Settings</button><button type="button" onclick="location.href='crm-team.html'"><i>♧</i> Team access</button><button type="button" onclick="location.href='crm-branding.html'"><i>◈</i> White Label</button><button type="button" onclick="location.href='purchase-apps.html'"><i>⊞</i> Purchase Apps</button><div class="navcap">WORKRELIEF APPS</div><button data-page="apps"><i>⊞</i> Connected apps</button></div></aside><div class="wr-mobile-backdrop" id="wr-mobile-backdrop" hidden></div><main class="main"><header class="top"><div class="crumb"><button class="mobile btn" onclick="toggleCRMNav()" aria-label="Open navigation" aria-expanded="false" id="wr-mobile-menu">☰</button> WorkRelief <span style="color:#b1b9c7"> / </span> <span id="crumb">Overview</span></div><div class="right"><input class="search" id="search" placeholder="⌕ Search records..." aria-label="Search records"><button class="btn" type="button" id="wr-manual-refresh" title="Refresh this view">↻ Refresh</button><button class="btn" onclick="openNew()">＋ New</button><div class="wr-user-menu-wrap" id="wr-user-menu-wrap"><button type="button" class="wr-user-trigger" id="wr-user-trigger" aria-expanded="false" aria-haspopup="true" aria-controls="wr-user-menu"><span class="avatar" id="wr-account-avatar">WR</span><span class="wr-user-summary"><strong id="wr-user-display">My Account</strong><small id="wr-user-role">Workspace member</small></span><span class="wr-menu-chevron" aria-hidden="true">⌄</span></button><div class="wr-user-menu" id="wr-user-menu" hidden><div class="wr-menu-identity"><strong id="wr-menu-name">My Account</strong><span id="wr-current-user">Signed in</span></div><button type="button" id="wr-profile-action">♙ &nbsp; My profile</button><button type="button" id="wr-settings-action">⚙ &nbsp; Settings</button><button type="button" id="wr-team-action" onclick="location.href='crm-team.html'">♧ &nbsp; Team access</button><button type="button" onclick="location.href='crm-branding.html'">◈ &nbsp; White Label</button><button type="button" onclick="location.href='purchase-apps.html'">⊞ &nbsp; Purchase Apps</button><button type="button" id="wr-signout" class="wr-menu-signout">↪ &nbsp; Sign out</button></div></div></div></header><div class="content" id="content"></div></main></div><div class="drawerback" id="back" onclick="if(event.target===this)closeDrawer()"><div class="drawer" id="drawer"></div></div>
 <script>
 window.wrConfirmAction=function(message,{title='Confirm action',confirmText='Confirm',cancelText='Cancel'}={}){
@@ -395,6 +404,20 @@ function wrEnhanceDrawer(){
   const form=drawer.querySelector('form');
   if(form){
     form.classList.add('wr-floating-regular-form');
+    // Reuse the approved company's section-card layout for ordinary CRM forms.
+    // Preserve existing input elements, handlers, validation and submit behavior.
+    if(!form.querySelector(':scope > .wr-form-section') && !form.querySelector(':scope > .wr-modal-pane')){
+      const looseFields=[...form.children].filter(el=>el.matches('.field'));
+      if(looseFields.length){
+        const section=document.createElement('section');section.className='wr-form-section wr-generic-modal-section';
+        const heading=document.createElement('h3');
+        const headingText=(drawer.querySelector(':scope > h2')?.textContent||'Details').replace(/^(Add|Create|Edit|Update|New)\\s+/i,'').trim();
+        heading.textContent=headingText+' details';
+        const desc=document.createElement('p');desc.className='sub';desc.textContent='Enter the information below.';
+        const fields=document.createElement('div');fields.className='wr-form-pair';
+        looseFields[0].before(section);section.append(heading,desc,fields);looseFields.forEach(el=>fields.append(el));
+      }
+    }
     const hasFooter=form.querySelector(':scope > .wr-drawer-footer,:scope > .wr-form-actions,:scope > .actions');
     const submit=form.querySelector(':scope > button[type="submit"]');
     if(submit&&!hasFooter){
