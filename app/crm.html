@@ -253,7 +253,173 @@ body:has(.drawerback.show){overflow:hidden}
 @media(max-width:920px){.wr-mail-layout{grid-template-columns:1fr}.wr-mail-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wr-mail-editor-layout{grid-template-columns:1fr}.wr-mail-preview-panel{position:static}}
 @media(max-width:610px){.wr-mail-center{padding:0 0 18px}.wr-mail-brand-banner{padding:12px}.wr-mail-ready{margin-left:0}.wr-mail-card-grid,.wr-mail-side{grid-template-columns:1fr}.wr-mail-section-title{align-items:flex-start;flex-direction:column}.wr-mail-template-card{min-height:0}.wr-mail-editor-fields{padding:14px}.wr-mail-editor-actions{flex-wrap:wrap}}
 </style><link rel="icon" type="image/png" href="../assets/img/fav.png">
-<link rel="stylesheet" href="crm-modal.css"><script defer src="crm-modal.js"></script></head><body class="wr-auth-pending"><div id="wr-auth-screen" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#f7f9fc;color:#18243b;font:600 16px system-ui;padding:24px;text-align:center">Verifying secure workspace access…</div><div class="app"><aside class="sidebar"><div class="brand"><span class="brandmark">w</span>workrelief <small>crm</small></div><div class="workspace">◈ &nbsp; Demo Workspace <span>⌄</span></div><div class="nav"><div class="navcap">WORKSPACE</div><button data-page="dashboard" class="on"><i>▦</i> Overview</button><button data-page="leads"><i>◉</i> Leads</button><button data-page="contacts"><i>♙</i> Contacts</button><button data-page="companies"><i>▤</i> Companies</button><button data-page="pipeline"><i>▥</i> Deals & Pipeline</button><button data-page="tasks"><i>☑</i> My Work</button><div class="navcap">PRODUCTIVITY</div><button data-page="activities"><i>◷</i> Activities</button><button data-page="reports"><i>▧</i> Reports</button><button data-page="settings"><i>⚙</i> Settings</button><button type="button" onclick="location.href='crm-team.html'"><i>♧</i> Team access</button><button type="button" onclick="location.href='crm-branding.html'"><i>◈</i> White Label</button><button type="button" onclick="location.href='purchase-apps.html'"><i>⊞</i> Purchase Apps</button><div class="navcap">WORKRELIEF APPS</div><button data-page="apps"><i>⊞</i> Connected apps</button></div></aside><div class="wr-mobile-backdrop" id="wr-mobile-backdrop" hidden></div><main class="main"><header class="top"><div class="crumb"><button class="mobile btn" onclick="toggleCRMNav()" aria-label="Open navigation" aria-expanded="false" id="wr-mobile-menu">☰</button> WorkRelief <span style="color:#b1b9c7"> / </span> <span id="crumb">Overview</span></div><div class="right"><input class="search" id="search" placeholder="⌕ Search records..." aria-label="Search records"><button class="btn" type="button" id="wr-manual-refresh" title="Refresh this view">↻ Refresh</button><button class="btn" onclick="openNew()">＋ New</button><div class="wr-user-menu-wrap" id="wr-user-menu-wrap"><button type="button" class="wr-user-trigger" id="wr-user-trigger" aria-expanded="false" aria-haspopup="true" aria-controls="wr-user-menu"><span class="avatar" id="wr-account-avatar">WR</span><span class="wr-user-summary"><strong id="wr-user-display">My Account</strong><small id="wr-user-role">Workspace member</small></span><span class="wr-menu-chevron" aria-hidden="true">⌄</span></button><div class="wr-user-menu" id="wr-user-menu" hidden><div class="wr-menu-identity"><strong id="wr-menu-name">My Account</strong><span id="wr-current-user">Signed in</span></div><button type="button" id="wr-profile-action">♙ &nbsp; My profile</button><button type="button" id="wr-settings-action">⚙ &nbsp; Settings</button><button type="button" id="wr-team-action" onclick="location.href='crm-team.html'">♧ &nbsp; Team access</button><button type="button" onclick="location.href='crm-branding.html'">◈ &nbsp; White Label</button><button type="button" onclick="location.href='purchase-apps.html'">⊞ &nbsp; Purchase Apps</button><button type="button" id="wr-signout" class="wr-menu-signout">↪ &nbsp; Sign out</button></div></div></div></header><div class="content" id="content"></div></main></div><div class="wm-overlay" id="back" hidden onclick="if(event.target===this)closeDrawer()"><div class="wm-dialog" id="drawer"></div></div>
+<style id="wm-modal-inline">
+/* Rebuilt WorkRelief dialogs — visual reference: approved Add company screenshot. */
+:root{--wm-blue:#075cf5;--wm-ink:#0b1e43;--wm-muted:#7488ac;--wm-border:#dce6f5}
+html:has(.wm-overlay),body:has(.wm-overlay){overflow:hidden!important}
+.wm-overlay{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:clamp(9px,4.35vh,46px);background:rgba(18,34,60,.64);backdrop-filter:blur(2px)}
+.wm-dialog{position:relative;display:flex;flex-direction:column;width:min(992px,calc(100vw - 32px));max-height:calc(100dvh - 40px);height:min(1010px,calc(100dvh - 92px));background:#fbfcff;border:1px solid #e0e8f4;border-radius:11px;box-shadow:0 25px 80px #06193645;overflow:hidden;color:var(--wm-ink)}
+.wm-dialog.wm-compact{height:auto;max-height:calc(100dvh - 40px);width:min(640px,calc(100vw - 32px))}
+.wm-header{flex:none;padding:29px 28px 0}.wm-eyebrow{display:block;color:var(--wm-blue);font-weight:850;letter-spacing:1.9px;font-size:11px;text-transform:uppercase;margin:0 0 4px}
+.wm-heading{font-size:34px;line-height:1.13;letter-spacing:-1.3px;font-weight:800;margin:0 55px 4px 0;color:#0a1b3d}
+.wm-description{font-size:14px;line-height:1.5;color:#7085a9;margin:0 50px 18px 0}
+.wm-close{position:absolute;top:18px;right:18px;display:grid;place-items:center;width:41px;height:41px;border:1px solid #dce6f5;border-radius:11px;background:#fff;color:#405980;font-size:24px;box-shadow:0 4px 14px #203d6510;cursor:pointer}
+.wm-tabs{display:flex;gap:0;margin:5px 28px 0;overflow:auto;border-bottom:1px solid #dce5f3;flex:none}
+.wm-tab{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:10px;padding:15px 12px;white-space:nowrap;background:transparent;border:0;border-bottom:3px solid transparent;border-radius:0;color:#657b9e;font-size:13px;font-weight:700;cursor:pointer}
+.wm-tab.active{color:var(--wm-blue);border-bottom-color:var(--wm-blue)}.wm-tab-icon{font-size:20px}
+.wm-scroll{flex:1;overflow:auto;min-height:0;padding:20px 28px;scrollbar-width:thin;scroll-behavior:smooth}
+.wm-form{display:flex;flex-direction:column;gap:18px;margin:0;padding:0}
+.wm-section{border:1px solid #e0e8f5;border-radius:9px;background:#fff;box-shadow:0 5px 20px #1a397007;padding:21px 27px}
+.wm-section-head{display:grid;grid-template-columns:53px 1fr;gap:24px;align-items:center;min-height:52px;margin-bottom:13px}
+.wm-section-symbol{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#e6eeff;color:#1262f5;font-size:24px}
+.wm-section:nth-child(2) .wm-section-symbol{background:#e2f7ee;color:#088c52}
+.wm-section:nth-child(3) .wm-section-symbol{background:#f0e9ff;color:#8040e8}
+.wm-section h3{font-size:17px;line-height:1.3;letter-spacing:-.4px;color:#0a1e42;font-weight:800;margin:0 0 3px}
+.wm-section .wm-section-description{margin:0;color:#778caf;font-size:12px;line-height:1.45}
+.wm-grid,.wm-section .wr-form-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 26px}
+.wm-section .field{min-width:0;margin:0;padding:0;border:0;background:transparent}
+.wm-section .field label{display:block;font-size:12px;font-weight:750;color:#112850;margin:0 0 4px}
+.wm-section :is(input:not([type=checkbox]):not([type=radio]),select,textarea){box-sizing:border-box;min-width:0;max-width:100%;width:100%;min-height:40px;padding:9px 14px;background:#fff;color:#233b64;font:inherit;font-size:13px;border:1px solid #cedbf0;border-radius:8px;box-shadow:none}
+.wm-section :is(input,select,textarea):focus{outline:3px solid #1262f520;border-color:#1262f5}
+.wm-section :is(input,textarea)::placeholder{color:#8296b6}
+.wm-footer{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 23px;background:#fff;border-top:1px solid #e0e7f3}
+.wm-footer button{min-width:120px;min-height:43px;margin:0;border-radius:9px;font-size:12px;font-weight:750}
+.wm-footer .btn.primary,.wm-footer button[type=submit]{margin-left:auto;background:#075cf5;border-color:#075cf5;color:white}
+.wm-footer [hidden]{display:none!important}
+.wm-compact .wm-section{box-shadow:none}.wm-compact .wm-scroll{max-height:60dvh}
+.wm-compare{display:grid;grid-template-columns:125px 1fr 1fr;gap:0;margin-top:12px;border:1px solid #e0e8f5;border-radius:9px;overflow:hidden}
+.wm-compare>div{padding:10px;border-bottom:1px solid #e7eef8;overflow-wrap:anywhere;font-size:12px}.wm-compare>div:nth-child(6n + 1),.wm-compare>div:nth-child(6n + 2),.wm-compare>div:nth-child(6n + 3){background:#f4f8ff}
+.wm-dialog .wr-form-section,.wm-dialog .wr-detail-section{display:block}
+@media(max-width:720px){.wm-overlay{padding:8px}.wm-dialog{width:100%;height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}.wm-header{padding:22px 16px 0}.wm-heading{font-size:27px}.wm-tabs{margin:4px 16px 0}.wm-tab{flex:0 0 auto}.wm-scroll{padding:15px 16px}.wm-section{padding:16px}.wm-section-head{grid-template-columns:42px 1fr;gap:12px}.wm-section-symbol{width:42px;height:42px}.wm-grid,.wm-section .wr-form-pair{grid-template-columns:1fr}.wm-footer{padding:12px 16px}.wm-compare{grid-template-columns:85px 1fr 1fr}}
+
+.wm-overlay[hidden]{display:none!important}
+.wm-scroll .wm-form{width:100%}
+.wm-form .wm-section>.wm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 26px}
+@media(max-width:720px){.wm-form .wm-section>.wm-grid{grid-template-columns:1fr}}
+</style><script id="wm-modal-inline-js">/* New WorkRelief modal DOM. No retired drawer/wizard markup is reused. */
+function wrModalIcon(i){
+ const paths=[
+ '<rect x="4" y="7" width="16" height="15" rx="1"/><path d="M9 22V3h6v19M7 11h2m-2 4h2m6-4h2m-2 4h2"/>',
+ '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+ '<path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/>',
+ '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+ '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>'
+ ];
+ return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">'+paths[i%5]+'</svg>';
+}
+function wrEnhanceDrawer(){
+ const dialog=document.getElementById('drawer'), overlay=document.getElementById('back');
+ if(!dialog||!overlay)return;
+ overlay.className='wm-overlay show';dialog.className='wm-dialog';
+ dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+ const nodes=[...dialog.children],eyebrow=nodes.find(x=>x.classList.contains('eyebrow')),heading=nodes.find(x=>x.matches('h2')),description=nodes.find(x=>x.matches('p.sub,p:not(.note)'));
+ const category=eyebrow?.textContent||'WORKRELIEF',title=heading?.textContent||'Details',desc=description?.textContent||'';
+ [eyebrow,heading,description].forEach(x=>x?.remove());
+ const original=[...dialog.childNodes];dialog.replaceChildren();
+ const header=document.createElement('header');header.className='wm-header';
+ const label=document.createElement('span');label.className='wm-eyebrow';label.textContent=category;
+ const h=document.createElement('h2');h.className='wm-heading';h.textContent=title;h.id='wm-dialog-title';
+ const summary=document.createElement('p');summary.className='wm-description';summary.textContent=desc;
+ const close=document.createElement('button');close.className='wm-close';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close');close.onclick=closeDrawer;
+ header.append(label,h,summary,close);dialog.append(header);
+ dialog.setAttribute('aria-labelledby','wm-dialog-title');
+ const scroll=document.createElement('div');scroll.className='wm-scroll';
+ const form=original.find(x=>x.nodeType===1&&x.matches('form'));
+ if(form){
+  form.classList.remove('formgrid','wr-floating-company-form','wr-floating-regular-form');
+  form.classList.add('wm-form');
+  if(title==='Add company'){
+ const names=[['name','website','industry','employee_count','segment','tags_text'],['primary_contact_name','primary_contact_phone','email'],['parent_company_id','owner_id','account_type','territory_id'],['address_line1','address_line2','city','state_region','postal_code','country'],['notes','description','annual_revenue','source','status','industry_naics_code','custom_fields_text','phone']];
+ const headings=['Company basics','Primary contact','Relationships','Address','Notes & insights'];
+ const descriptions=['Add core information about the company.','The first person is added directly to Contacts and set as the primary account contact.','Assign an owner and territory, and categorize the account.','Add the company address.','Save helpful background information.'];
+ const prior=[...form.querySelectorAll(':scope > .wr-form-section')];
+ const allFields=[...form.querySelectorAll('.wr-form-section .field')];
+ const cards=names.map((items,i)=>{
+  const section=document.createElement('section');section.className='wr-form-section';
+  const h=document.createElement('h3');h.textContent=(i+1)+'. '+headings[i];
+  const p=document.createElement('p');p.className='sub';p.textContent=descriptions[i];
+  const grid=document.createElement('div');grid.className='wm-grid';
+  items.forEach(name=>{const input=form.querySelector('[name="'+name+'"]');const field=input?.closest('.field');if(field&&!grid.contains(field))grid.append(field)});
+  section.append(h,p,grid);return section
+ });
+ const extras=allFields.filter(f=>!cards.some(c=>c.contains(f)));extras.forEach(f=>cards[4].lastChild.append(f));
+ prior[0]?.before(...cards);prior.forEach(x=>x.remove());
+}
+  const oldSections=[...form.querySelectorAll(':scope > .wr-form-section')];
+  const footer=oldSections.length?form.querySelector(':scope > .wr-drawer-footer'):form.querySelector(':scope > .wr-drawer-footer,:scope > .actions');
+  const sections=[];
+  if(oldSections.length){
+   oldSections.forEach((s,i)=>{
+    s.classList.add('wm-section');s.classList.remove('wr-form-section');
+    const titleEl=s.querySelector(':scope > h3');const descEl=s.querySelector(':scope > p.sub');
+    const top=document.createElement('div');top.className='wm-section-head';
+    const icon=document.createElement('span');icon.className='wm-section-symbol';icon.innerHTML=wrModalIcon(i);
+    const texts=document.createElement('div');
+    if(titleEl)texts.append(titleEl);if(descEl){descEl.classList.add('wm-section-description');texts.append(descEl)}
+    top.append(icon,texts);s.prepend(top);sections.push(s);
+   });
+  }else{
+   const fields=[...form.children].filter(x=>x.matches('.field'));
+   if(fields.length){
+    const section=document.createElement('section');section.className='wm-section';
+    const top=document.createElement('div');top.className='wm-section-head';top.innerHTML='<span class="wm-section-symbol">▦</span><div><h3></h3><p class="wm-section-description">Enter the information below.</p></div>';top.querySelector('h3').textContent='1. '+h.textContent.replace(/^(Add|Create|Edit|New|Update)\s+/i,'')+' details';
+    const grid=document.createElement('div');grid.className='wm-grid';fields[0].before(section);section.append(top,grid);fields.forEach(x=>grid.append(x));sections.push(section);
+   }
+  }
+  if(sections.length>1){
+   const tabs=document.createElement('nav');tabs.className='wm-tabs';tabs.setAttribute('aria-label','Form sections');
+   sections.forEach((s,i)=>{
+    const t=document.createElement('button');t.type='button';t.className='wm-tab'+(i===0?' active':'');
+    const ic=document.createElement('span');ic.className='wm-tab-icon';ic.innerHTML=wrModalIcon(i);
+    t.append(ic,document.createTextNode((s.querySelector('h3')?.textContent||'Section '+(i+1)).replace(/^\d+\.\s*/,'')));
+    t.onclick=()=>{s.scrollIntoView({behavior:'smooth',block:'start'});[...tabs.children].forEach(x=>x.classList.toggle('active',x===t))};
+    tabs.append(t);
+   });dialog.append(tabs);
+  }
+  if(!footer){
+   const submit=form.querySelector('button[type=submit]');
+   if(submit){
+    const buttons=document.createElement('div');buttons.className='wm-footer';
+    const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='Cancel';cancel.onclick=closeDrawer;
+    form.append(buttons);buttons.append(cancel,submit);
+    buttons.dataset.wmFooter='yes';
+   }
+  }
+  const finalFooter=form.querySelector(':scope > .wr-drawer-footer,:scope > .wm-footer,:scope > .actions');
+  if(finalFooter){
+   finalFooter.className='wm-footer';
+   let cancel=[...finalFooter.querySelectorAll('button')].find(x=>x.type==='button'&&/cancel/i.test(x.textContent));
+   if(!cancel){cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='Cancel';cancel.onclick=closeDrawer;finalFooter.prepend(cancel)}
+   const button=finalFooter.querySelector('button[type=submit]');
+   if(button&&/^Add company$/i.test(title))button.textContent='Save company';
+   finalFooter.remove();form.append(finalFooter);
+  }
+  scroll.append(form);dialog.append(scroll);
+ }else{
+   dialog.classList.add('wm-compact');
+   const section=document.createElement('section');section.className='wm-section';
+   for(const node of original)if(node.nodeType===1&&node!==eyebrow&&node!==heading&&node!==description)section.append(node);
+   scroll.append(section);dialog.append(scroll);
+ }
+ const footer=dialog.querySelector('.wm-form > .wm-footer');
+ if(footer){footer.remove();dialog.append(footer);footer.querySelectorAll('button').forEach(b=>{if(b.type==='submit')b.addEventListener('click',()=>{if(form.requestSubmit)form.requestSubmit();else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))})})}
+ dialog.querySelectorAll('.wm-form>.wr-form-section').forEach(s=>s.classList.add('wm-section'));
+ scroll.scrollTop=0;
+}
+/* Shared independent simple dialogs, built fresh each time. */
+function wrSimpleModal({category='WORKRELIEF',title,description='',body,actions=[],onDismiss=()=>{}}){
+ const overlay=document.createElement('div');overlay.className='wm-overlay';
+ const dialog=document.createElement('section');dialog.className='wm-dialog wm-compact';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+ const header=document.createElement('header');header.className='wm-header';const eyebrow=document.createElement('span');eyebrow.className='wm-eyebrow';eyebrow.textContent=category;
+ const h=document.createElement('h2');h.className='wm-heading';h.textContent=title;const p=document.createElement('p');p.className='wm-description';p.textContent=description;
+ const close=document.createElement('button');close.className='wm-close';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close');
+ const scroll=document.createElement('div');scroll.className='wm-scroll';const section=document.createElement('section');section.className='wm-section';section.append(body);scroll.append(section);
+ const footer=document.createElement('footer');footer.className='wm-footer';for(const {label,primary,onClick} of actions){const btn=document.createElement('button');btn.type='button';btn.className='btn'+(primary?' primary':'');btn.textContent=label;btn.onclick=()=>onClick(finish);footer.append(btn)}
+ const oldFocus=document.activeElement;function finish(){overlay.remove();document.removeEventListener('keydown',key);oldFocus?.focus?.()}
+ function dismiss(){finish();onDismiss()}function key(e){if(e.key==='Escape')dismiss()}close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss()};document.addEventListener('keydown',key);
+ header.append(eyebrow,h,p,close);dialog.append(header,scroll,footer);overlay.append(dialog);document.body.append(overlay);close.focus();return {overlay,dialog,finish};
+}
+</script></head><body class="wr-auth-pending"><div id="wr-auth-screen" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#f7f9fc;color:#18243b;font:600 16px system-ui;padding:24px;text-align:center">Verifying secure workspace access…</div><div class="app"><aside class="sidebar"><div class="brand"><span class="brandmark">w</span>workrelief <small>crm</small></div><div class="workspace">◈ &nbsp; Demo Workspace <span>⌄</span></div><div class="nav"><div class="navcap">WORKSPACE</div><button data-page="dashboard" class="on"><i>▦</i> Overview</button><button data-page="leads"><i>◉</i> Leads</button><button data-page="contacts"><i>♙</i> Contacts</button><button data-page="companies"><i>▤</i> Companies</button><button data-page="pipeline"><i>▥</i> Deals & Pipeline</button><button data-page="tasks"><i>☑</i> My Work</button><div class="navcap">PRODUCTIVITY</div><button data-page="activities"><i>◷</i> Activities</button><button data-page="reports"><i>▧</i> Reports</button><button data-page="settings"><i>⚙</i> Settings</button><button type="button" onclick="location.href='crm-team.html'"><i>♧</i> Team access</button><button type="button" onclick="location.href='crm-branding.html'"><i>◈</i> White Label</button><button type="button" onclick="location.href='purchase-apps.html'"><i>⊞</i> Purchase Apps</button><div class="navcap">WORKRELIEF APPS</div><button data-page="apps"><i>⊞</i> Connected apps</button></div></aside><div class="wr-mobile-backdrop" id="wr-mobile-backdrop" hidden></div><main class="main"><header class="top"><div class="crumb"><button class="mobile btn" onclick="toggleCRMNav()" aria-label="Open navigation" aria-expanded="false" id="wr-mobile-menu">☰</button> WorkRelief <span style="color:#b1b9c7"> / </span> <span id="crumb">Overview</span></div><div class="right"><input class="search" id="search" placeholder="⌕ Search records..." aria-label="Search records"><button class="btn" type="button" id="wr-manual-refresh" title="Refresh this view">↻ Refresh</button><button class="btn" onclick="openNew()">＋ New</button><div class="wr-user-menu-wrap" id="wr-user-menu-wrap"><button type="button" class="wr-user-trigger" id="wr-user-trigger" aria-expanded="false" aria-haspopup="true" aria-controls="wr-user-menu"><span class="avatar" id="wr-account-avatar">WR</span><span class="wr-user-summary"><strong id="wr-user-display">My Account</strong><small id="wr-user-role">Workspace member</small></span><span class="wr-menu-chevron" aria-hidden="true">⌄</span></button><div class="wr-user-menu" id="wr-user-menu" hidden><div class="wr-menu-identity"><strong id="wr-menu-name">My Account</strong><span id="wr-current-user">Signed in</span></div><button type="button" id="wr-profile-action">♙ &nbsp; My profile</button><button type="button" id="wr-settings-action">⚙ &nbsp; Settings</button><button type="button" id="wr-team-action" onclick="location.href='crm-team.html'">♧ &nbsp; Team access</button><button type="button" onclick="location.href='crm-branding.html'">◈ &nbsp; White Label</button><button type="button" onclick="location.href='purchase-apps.html'">⊞ &nbsp; Purchase Apps</button><button type="button" id="wr-signout" class="wr-menu-signout">↪ &nbsp; Sign out</button></div></div></div></header><div class="content" id="content"></div></main></div><div class="wm-overlay" id="back" hidden onclick="if(event.target===this)closeDrawer()"><div class="wm-dialog" id="drawer"></div></div>
 <script>window.wrConfirmAction=(message,{title='Confirm action',confirmText='Confirm',cancelText='Cancel'}={})=>new Promise(resolve=>{const body=document.createElement('p');body.textContent=message;wrSimpleModal({category:'CONFIRM ACTION',title,description:'Please review this action before continuing.',body,onDismiss:()=>resolve(false),actions:[{label:cancelText,onClick:finish=>{finish();resolve(false)}},{label:confirmText,primary:true,onClick:finish=>{finish();resolve(true)}}]})});</script>
 <script>
 const seedContacts=[];
