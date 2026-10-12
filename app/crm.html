@@ -725,13 +725,20 @@ try{
             let style=document.getElementById('wr-custom-brand-style');
             if(!style){style=document.createElement('style');style.id='wr-custom-brand-style';document.head.appendChild(style)}
             style.textContent=`
-:root{--accent:${validColor};--wr-crm-accent:${validColor};--wr-control-focus:${validColor};--wr-crm-accent-light:color-mix(in srgb,${validColor} 12%,white);--soft:color-mix(in srgb,${validColor} 9%,white)}
+:root{--accent:${validColor};--wm-blue:${validColor};--wr-modal-blue:${validColor};--wr-crm-accent:${validColor};--wr-control-focus:${validColor};--wr-crm-accent-light:color-mix(in srgb,${validColor} 12%,white);--soft:color-mix(in srgb,${validColor} 9%,white)}
 .sidebar .brandmark,.sidebar .nav button.on,.sidebar .nav button:hover,.btn.primary,.btn-primary,.button-primary,.action-primary,.app button.primary,.app .action.primary,.app .badge.primary,.app .progress .fill{background-color:var(--accent)!important;border-color:var(--accent)!important;color:white!important}
 .sidebar .brand small,.eyebrow,.smalllink,.navcap.active,.app a:not(.btn):not(.button),.app .link,.app .tab.active,.app .metric-accent,.app .crumb strong{color:var(--accent)!important}
 .app input:focus,.app select:focus,.app textarea:focus,.app button:focus-visible,.app .tab.active,.app .on{border-color:var(--accent)!important;outline-color:var(--accent)!important}
 .app .stat,.app .panel,.app .card,.app .dashboard-card{border-color:color-mix(in srgb,var(--accent) 18%,#e7ebf0)}
 .app .avatar,.app .pill.active,.app .chip.active{background-color:var(--soft)!important;color:var(--accent)!important}
 .app .bar .fill,.app .chart-fill,.app .progress-fill{background-color:var(--accent)!important}
+/* White Label also themes the shared modal, tabs, section icons and action bar. */
+.wm-eyebrow,.wm-tab.active,.wm-tab:hover,.wm-tab-icon,.wm-section-symbol{color:var(--accent)!important}
+.wm-tab.active{border-bottom-color:var(--accent)!important}
+.wm-section-symbol{background-color:color-mix(in srgb,var(--accent) 11%,white)!important}
+.wm-footer .btn.primary,.wm-footer button[type=submit],.wm-sales-dialog .wm-sales-actions .btn{background-color:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}
+.wm-section :is(input,select,textarea):focus{border-color:var(--accent)!important;outline-color:color-mix(in srgb,var(--accent) 22%,transparent)!important}
+
 `;
           }
         }
