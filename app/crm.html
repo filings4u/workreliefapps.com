@@ -413,7 +413,7 @@ try{
       // Select a workspace only from the authenticated user's verified memberships.
       const requestedWorkspace=new URLSearchParams(location.search).get('workspace');
       const member=members.find(m=>m.workspace_id===requestedWorkspace)||members[0];
-      if(!['owner','admin'].includes(member.role)){location.replace('crm-team-workspace.html?workspace='+encodeURIComponent(member.workspace_id));return;}
+      if(!['owner','admin'].includes(member.role)){if(new URLSearchParams(location.search).get('mode')!=='team'){location.replace('crm-team-workspace.html?workspace='+encodeURIComponent(member.workspace_id));return;}document.querySelectorAll('button[onclick*="crm-team.html"],button[onclick*="crm-branding.html"]').forEach(el=>el.remove());document.querySelectorAll('[data-page="settings"],[data-page="apps"]').forEach(el=>el.remove());}
       const label=document.querySelector('.sidebar .workspace');
       if(members.length>1&&label){
         const selector=document.createElement('select');
