@@ -109,7 +109,7 @@ function wrEnhanceDrawer(){
  scroll.scrollTop=0;
 }
 /* Shared independent simple dialogs, built fresh each time. */
-function wrSimpleModal({category='WORKRELIEF',title,description='',body,actions=[]}){
+function wrSimpleModal({category='WORKRELIEF',title,description='',body,actions=[],onDismiss=()=>{}}){
  const overlay=document.createElement('div');overlay.className='wm-overlay';
  const dialog=document.createElement('section');dialog.className='wm-dialog wm-compact';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
  const header=document.createElement('header');header.className='wm-header';const eyebrow=document.createElement('span');eyebrow.className='wm-eyebrow';eyebrow.textContent=category;
@@ -118,6 +118,6 @@ function wrSimpleModal({category='WORKRELIEF',title,description='',body,actions=
  const scroll=document.createElement('div');scroll.className='wm-scroll';const section=document.createElement('section');section.className='wm-section';section.append(body);scroll.append(section);
  const footer=document.createElement('footer');footer.className='wm-footer';for(const {label,primary,onClick} of actions){const btn=document.createElement('button');btn.type='button';btn.className='btn'+(primary?' primary':'');btn.textContent=label;btn.onclick=()=>onClick(finish);footer.append(btn)}
  const oldFocus=document.activeElement;function finish(){overlay.remove();document.removeEventListener('keydown',key);oldFocus?.focus?.()}
- function key(e){if(e.key==='Escape')finish()}close.onclick=finish;overlay.onclick=e=>{if(e.target===overlay)finish()};document.addEventListener('keydown',key);
+ function dismiss(){finish();onDismiss()}function key(e){if(e.key==='Escape')dismiss()}close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss()};document.addEventListener('keydown',key);
  header.append(eyebrow,h,p,close);dialog.append(header,scroll,footer);overlay.append(dialog);document.body.append(overlay);close.focus();return {overlay,dialog,finish};
 }
