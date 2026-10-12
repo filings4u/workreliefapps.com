@@ -54,7 +54,7 @@ function wrEnhanceDrawer(){
    const fields=[...form.children].filter(x=>x.matches('.field'));
    if(fields.length){
     const section=document.createElement('section');section.className='wm-section';
-    const top=document.createElement('div');top.className='wm-section-head';top.innerHTML='<span class="wm-section-symbol">▦</span><div><h3>1. '+h.textContent.replace(/^(Add|Create|Edit|New|Update)\\s+/i,'')+' details</h3><p class="wm-section-description">Enter the information below.</p></div>';
+    const top=document.createElement('div');top.className='wm-section-head';top.innerHTML='<span class="wm-section-symbol">▦</span><div><h3></h3><p class="wm-section-description">Enter the information below.</p></div>';top.querySelector('h3').textContent='1. '+h.textContent.replace(/^(Add|Create|Edit|New|Update)\s+/i,'')+' details';
     const grid=document.createElement('div');grid.className='wm-grid';fields[0].before(section);section.append(top,grid);fields.forEach(x=>grid.append(x));sections.push(section);
    }
   }
@@ -63,7 +63,7 @@ function wrEnhanceDrawer(){
    sections.forEach((s,i)=>{
     const t=document.createElement('button');t.type='button';t.className='wm-tab'+(i===0?' active':'');
     const ic=document.createElement('span');ic.className='wm-tab-icon';ic.textContent=['▦','♟','♧','⌖','▤'][i%5];
-    t.append(ic,document.createTextNode((s.querySelector('h3')?.textContent||'Section '+(i+1)).replace(/^\\d+\\.\\s*/,'')));
+    t.append(ic,document.createTextNode((s.querySelector('h3')?.textContent||'Section '+(i+1)).replace(/^\d+\.\s*/,'')));
     t.onclick=()=>{s.scrollIntoView({behavior:'smooth',block:'start'});[...tabs.children].forEach(x=>x.classList.toggle('active',x===t))};
     tabs.append(t);
    });dialog.append(tabs);
