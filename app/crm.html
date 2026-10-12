@@ -341,6 +341,27 @@ html:has(.wm-overlay),body:has(.wm-overlay){overflow:hidden!important}
 .wm-email-dialog .wr-mail-brand-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px}
 @media(max-width:800px){.wm-email-dialog .wr-mail-layout{grid-template-columns:1fr}.wm-email-dialog .wr-mail-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.wm-dialog.wm-email-dialog{width:100%;height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}.wm-email-dialog .wm-scroll{padding:15px 16px}.wm-email-dialog .wm-section{padding:16px}.wm-email-dialog .wr-mail-card-grid{grid-template-columns:1fr}.wm-email-dialog .wr-mail-section-title{flex-wrap:wrap}}
+
+/* One shared modal footprint and scroll region throughout CRM. */
+#back.show>.wm-dialog,.wm-overlay>.wm-dialog,
+.wm-dialog.wm-compact,.wm-dialog.wm-sales-dialog,
+.wm-dialog.wm-automation-dialog,.wm-dialog.wm-email-dialog{
+ width:min(992px,calc(100vw - 32px))!important;
+ max-width:992px!important;
+ height:min(1010px,calc(100dvh - 92px))!important;
+ max-height:calc(100dvh - 40px)!important;
+ display:flex!important;flex-direction:column!important;
+}
+.wm-dialog>.wm-scroll{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;max-height:none!important}
+.wm-dialog>.wm-footer{flex:0 0 auto!important}
+@media(max-width:720px){
+ #back.show>.wm-dialog,.wm-overlay>.wm-dialog,
+ .wm-dialog.wm-compact,.wm-dialog.wm-sales-dialog,
+ .wm-dialog.wm-automation-dialog,.wm-dialog.wm-email-dialog{
+  width:100%!important;max-width:none!important;
+  height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important;
+ }
+}
 </style><script id="wm-modal-inline-js">/* New WorkRelief modal DOM. No retired drawer/wizard markup is reused. */
 function wrModalIcon(i){
  const paths=[
@@ -487,7 +508,19 @@ function wrEnhanceDrawer(){
  }
  const footer=dialog.querySelector('.wm-form > .wm-footer');
  if(footer){footer.remove();dialog.append(footer);footer.querySelectorAll('button').forEach(b=>{if(b.type==='submit')b.addEventListener('click',()=>{if(form.requestSubmit)form.requestSubmit();else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))})})}
- dialog.querySelectorAll('.wm-form>.wr-form-section').forEach(s=>s.classList.add('wm-section'));
+ // Normalize every popup to one footer Cancel action, even if a legacy action
+ // was nested inside a section rather than directly under the form.
+ const footerBar=dialog.querySelector(':scope > .wm-footer');
+ if(footerBar){
+   const footerCancel=[...footerBar.querySelectorAll('button')].find(b=>/^cancel$/i.test(b.textContent.trim()));
+   dialog.querySelectorAll('button').forEach(button=>{
+     if(button!==footerCancel && /^cancel$/i.test(button.textContent.trim()))button.remove();
+   });
+   if(!footerCancel){
+     const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='Cancel';cancel.onclick=closeDrawer;footerBar.prepend(cancel);
+   }
+ }
+  dialog.querySelectorAll('.wm-form>.wr-form-section').forEach(s=>s.classList.add('wm-section'));
  scroll.scrollTop=0;
 }
 /* Shared independent simple dialogs, built fresh each time. */
