@@ -682,9 +682,8 @@ try{
         const ids=members.map(m=>m.user_id);
         const {data:profiles,error:profileError}=ids.length?await sb.from('user_profiles').select('user_id,display_name').in('user_id',ids):{data:[],error:null};
         // Profile visibility may be restricted; account membership remains the authoritative owner list.
-        const {data:invites}=await sb.from('wr_workspace_team_invitations').select('email,role').eq('workspace_id',workspaceId).not('accepted_at','is',null).limit(500);
-        const knownEmails=(invites||[]).map(x=>x.email).filter(Boolean);
-        wrAccountMeta.members=members.map(m=>{const name=profileError?'':String((profiles||[]).find(p=>p.user_id===m.user_id)?.display_name||'').trim();const email=knownEmails.length===1?knownEmails[0]:'';return {...m,display_name:name||'Team '+(m.role==='owner'?'owner':m.role==='admin'?'administrator':'member'),email}});
+        const {data:labels,error:labelError}=await sb.rpc('wr_crm_workspace_member_labels',{p_workspace_id:workspaceId});
+        wrAccountMeta.members=members.map(m=>{const entry=!labelError?(labels||[]).find(x=>x.user_id===m.user_id):null;const profile=(profiles||[]).find(p=>p.user_id===m.user_id);return {...m,display_name:entry?.display_name||profile?.display_name||'Team member',email:entry?.member_email||''}});
         return wrAccountMeta;
       };
       let wrParentLookupTimer=0;
