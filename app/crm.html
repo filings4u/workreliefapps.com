@@ -455,7 +455,7 @@ try{
             const validColor=/^#[0-9a-fA-F]{6}$/.test(branding.primary_color||'')?branding.primary_color:'#1768f5';
             document.documentElement.style.setProperty('--wr-crm-accent',validColor);
             document.documentElement.style.setProperty('--accent',validColor);
-            document.documentElement.style.setProperty('--wr-control-focus',validColor);
+            document.documentElement.style.setProperty('--wr-control-focus',validColor);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',validColor);
             const brandNode=document.querySelector('.sidebar .brand');
             if(brandNode){
               const businessName=String(branding.brand_name||'').trim();
@@ -469,7 +469,15 @@ try{
             }
             let style=document.getElementById('wr-custom-brand-style');
             if(!style){style=document.createElement('style');style.id='wr-custom-brand-style';document.head.appendChild(style)}
-            style.textContent='.sidebar .nav button.on,.sidebar .nav button:hover{background-color:'+validColor+' !important;color:#fff !important}.app .btn-primary,.app .button-primary{background-color:'+validColor+' !important;border-color:'+validColor+' !important}';
+            style.textContent=`
+:root{--accent:${validColor};--wr-crm-accent:${validColor};--wr-control-focus:${validColor};--wr-crm-accent-light:color-mix(in srgb,${validColor} 12%,white);--soft:color-mix(in srgb,${validColor} 9%,white)}
+.sidebar .brandmark,.sidebar .nav button.on,.sidebar .nav button:hover,.btn.primary,.btn-primary,.button-primary,.action-primary,.app button.primary,.app .action.primary,.app .badge.primary,.app .progress .fill{background-color:var(--accent)!important;border-color:var(--accent)!important;color:white!important}
+.sidebar .brand small,.eyebrow,.smalllink,.navcap.active,.app a:not(.btn):not(.button),.app .link,.app .tab.active,.app .metric-accent,.app .crumb strong{color:var(--accent)!important}
+.app input:focus,.app select:focus,.app textarea:focus,.app button:focus-visible,.app .tab.active,.app .on{border-color:var(--accent)!important;outline-color:var(--accent)!important}
+.app .stat,.app .panel,.app .card,.app .dashboard-card{border-color:color-mix(in srgb,var(--accent) 18%,#e7ebf0)}
+.app .avatar,.app .pill.active,.app .chip.active{background-color:var(--soft)!important;color:var(--accent)!important}
+.app .bar .fill,.app .chart-fill,.app .progress-fill{background-color:var(--accent)!important}
+`;
           }
         }
       }catch(brandingError){console.warn('CRM branding could not load; standard appearance retained',brandingError)}
