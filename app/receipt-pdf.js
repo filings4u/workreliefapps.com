@@ -41,7 +41,7 @@ export async function downloadReceipt(r){
  rect(42,134,528,113,12,pale);rect(57,151,36,36,18,rgb);
  pdf.setDrawColor(255,255,255);pdf.setLineWidth(2.6);pdf.line(66,169,72,175);pdf.line(72,175,84,161);
  text('Payment confirmed',107,166,23,true);text('Your WorkRelief subscription payment is complete.',107,187,10,false,muted);
- text('TOTAL PAID',58,218,9,true,muted);text(amount,570,225,25,true,ink,{align:'right'});
+ text('TOTAL PAID',58,218,9,true,muted);text(amount,544,225,25,true,ink,{align:'right'});
  text('PURCHASE SUMMARY',42,280,10,true,rgb);
  text('Applications',42,311,10,false,muted);
  wrapped((r.apps||[]).map(label).join(', ')||'None',235,311,325,11,true);rule(344);
