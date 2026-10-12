@@ -413,6 +413,7 @@ try{
       // Select a workspace only from the authenticated user's verified memberships.
       const requestedWorkspace=new URLSearchParams(location.search).get('workspace');
       const member=members.find(m=>m.workspace_id===requestedWorkspace)||members[0];
+      if(member.role==='owner')for(const [fragment,page] of [['purchase-apps.html','purchase-apps.html'],['crm-branding.html','crm-branding.html']])document.querySelectorAll('button[onclick*="'+fragment+'"]').forEach(el=>{el.onclick=()=>location.assign(page+'?workspace='+encodeURIComponent(member.workspace_id));});
       if(member.role!=='owner')document.querySelectorAll('button[onclick*="crm-branding.html"],button[onclick*="purchase-apps.html"]').forEach(el=>el.remove());
       if(!['owner','admin'].includes(member.role)){if(new URLSearchParams(location.search).get('mode')!=='team'){location.replace('crm-team-workspace.html?workspace='+encodeURIComponent(member.workspace_id));}document.querySelectorAll('button[onclick*="crm-team.html"],button[onclick*="crm-branding.html"],button[onclick*="purchase-apps.html"]').forEach(el=>el.remove());document.querySelectorAll('[data-page="settings"],[data-page="apps"]').forEach(el=>el.remove());}
       const label=document.querySelector('.sidebar .workspace');
