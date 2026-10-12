@@ -42,7 +42,7 @@ export function crmQuery({sb,workspaceId,table,page=0,pageSize=50,filters={},exc
     if(clean)q=q.ilike(searchField,'%'+clean+'%');
   }
   const offset=page*pageSize;
-  return q.order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+pageSize-1);
+  return (['crm_quote_items','crm_product_bundle_items'].includes(table)?q:q.order('created_at',{ascending:false})).order('id',{ascending:false}).range(offset,offset+pageSize-1);
 }
 export async function crmPage(args){
   const {data,error,count}=await crmQuery(args);
