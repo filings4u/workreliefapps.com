@@ -54,6 +54,7 @@ export async function crmAllRows({sb,workspaceId,table,pageSize=200,maxRecords=1
   for(let page=0;all.length<maxRecords;page++){
     const result=await crmPage({sb,workspaceId,table,page,pageSize});
     all.push(...result.records);
+    if(all.length>maxRecords)throw Error('Workspace dataset exceeds the safe full-refresh limit; use server-side page and filters.');
     if(result.records.length<pageSize)return all;
     if(result.total!==null && all.length>=result.total)return all;
   }
