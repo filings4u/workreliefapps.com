@@ -18,7 +18,7 @@ function wrEnhanceDrawer(){
  const scroll=document.createElement('div');scroll.className='wm-scroll';
  const form=original.find(x=>x.nodeType===1&&x.matches('form'));
  if(form){
-  form.classList.remove('formgrid','wr-company-form','wr-floating-company-form','wr-floating-regular-form');
+  form.classList.remove('formgrid','wr-floating-company-form','wr-floating-regular-form');
   form.classList.add('wm-form');
   const oldSections=[...form.querySelectorAll(':scope > .wr-form-section')];
   const footer=oldSections.length?form.querySelector(':scope > .wr-drawer-footer'):form.querySelector(':scope > .wr-drawer-footer,:scope > .actions');
@@ -77,7 +77,7 @@ function wrEnhanceDrawer(){
    scroll.append(section);dialog.append(scroll);
  }
  const footer=dialog.querySelector('.wm-form > .wm-footer');
- if(footer){footer.remove();dialog.append(footer);footer.querySelectorAll('button').forEach(b=>{if(b.type==='submit')b.addEventListener('click',()=>{if(form.requestSubmit)form.requestSubmit(b);else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))})})}
+ if(footer){footer.remove();dialog.append(footer);footer.querySelectorAll('button').forEach(b=>{if(b.type==='submit')b.addEventListener('click',()=>{if(form.requestSubmit)form.requestSubmit();else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))})})}
  dialog.querySelectorAll('.wm-form>.wr-form-section').forEach(s=>s.classList.add('wm-section'));
  scroll.scrollTop=0;
 }
