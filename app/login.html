@@ -135,7 +135,7 @@ const email=document.getElementById('auth-email'),password=document.getElementBy
 const say=(message)=>{status.textContent=message};
 const next=new URLSearchParams(location.search).get('next');
 const inviteTicket=new URLSearchParams(location.search).get('invite');
-const destination=inviteTicket&&/^[a-f0-9]{64}$/i.test(inviteTicket)?new URL('crm-team.html?invite='+encodeURIComponent(inviteTicket),location.href).href:next==='app/crm-team.html'?new URL('crm-team.html'+(inviteTicket?'?invite='+encodeURIComponent(inviteTicket):''),location.href).href:new URL('crm.html',location.href).href;
+const destination=inviteTicket&&/^[a-f0-9]{64}$/i.test(inviteTicket)?new URL('crm-team.html?invite='+encodeURIComponent(inviteTicket),location.href).href:next==='app/crm-team.html'?new URL('crm-team.html'+(inviteTicket?'?invite='+encodeURIComponent(inviteTicket):''),location.href).href:(['app/purchase-apps.html','app/crm-branding.html','app/checkout-apps.html','app/crm-team-workspace.html','app/crm-team-seats.html'].includes((next||'').split('?')[0])?new URL((next||'').replace(/^app\//,''),location.href).href:new URL('crm.html',location.href).href);
 const form=document.getElementById('auth-form');
 function busy(value){submit.disabled=value;document.getElementById('auth-reset').disabled=value}
 const activation=document.getElementById('activation-form');
