@@ -316,6 +316,16 @@ html:has(.wm-overlay),body:has(.wm-overlay){overflow:hidden!important}
 .wm-sales-dialog .wm-sales-metrics .wr-account-fact strong{display:block;color:#0d2452;font-size:24px;font-weight:800;letter-spacing:-.5px;overflow-wrap:anywhere}
 .wm-sales-dialog .wm-section>.sub{display:block;color:#7388a9;margin-top:14px;line-height:1.55}
 @media(max-width:720px){.wm-dialog.wm-sales-dialog{width:100%;max-height:calc(100dvh - 16px)}.wm-sales-dialog .wm-scroll{max-height:75dvh}.wm-sales-dialog .wm-section{padding:16px}.wm-sales-dialog .wm-sales-metrics{grid-template-columns:1fr}.wm-sales-dialog .wm-sales-metrics .wr-account-fact strong{font-size:20px}.wm-sales-dialog .wm-sales-table th,.wm-sales-dialog .wm-sales-table td{padding:11px}}
+
+/* Automation Rules uses the full-size Company modal proportions. */
+.wm-dialog.wm-automation-dialog{width:min(992px,calc(100vw - 32px));height:min(1010px,calc(100dvh - 92px));max-height:calc(100dvh - 40px)}
+.wm-automation-dialog .wm-scroll{flex:1;min-height:0;overflow-y:auto;padding:20px 28px}
+.wm-automation-dialog .wm-section{padding:22px 27px}
+.wm-automation-dialog .wm-section .tablewrap{width:100%;max-width:100%;overflow-x:auto;margin-bottom:20px}
+.wm-automation-dialog .wm-section form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 26px}
+.wm-automation-dialog .wm-section form .field{min-width:0}
+.wm-automation-dialog .wm-section form :is(input:not([type=checkbox]),select,textarea){box-sizing:border-box;width:100%;max-width:100%}
+@media(max-width:720px){.wm-dialog.wm-automation-dialog{width:100%;height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}.wm-automation-dialog .wm-scroll{padding:15px 16px}.wm-automation-dialog .wm-section{padding:16px}.wm-automation-dialog .wm-section form{grid-template-columns:1fr}}
 </style><script id="wm-modal-inline-js">/* New WorkRelief modal DOM. No retired drawer/wizard markup is reused. */
 function wrModalIcon(i){
  const paths=[
@@ -434,7 +444,7 @@ function wrEnhanceDrawer(){
   scroll.append(form);dialog.append(scroll);
  }else{
    const isSales=/^(SALES CATALOG|SALES QUOTES|SALES FORECAST|SALES PERFORMANCE|SALES CONFIGURATION|SALES DOCUMENTS|RECURRING REVENUE)$/.test(category);
-   dialog.classList.add(isSales?'wm-sales-dialog':'wm-compact');
+   dialog.classList.add(category==='WORKRELIEF AUTOMATION'?'wm-automation-dialog':isSales?'wm-sales-dialog':'wm-compact');
    const section=document.createElement('section');section.className='wm-section';
    for(const node of original)if(node.nodeType===1&&node!==eyebrow&&node!==heading&&node!==description)section.append(node);
    scroll.append(section);dialog.append(scroll);
