@@ -411,7 +411,7 @@ function wrEnhanceDrawer(){
       if(looseFields.length){
         const section=document.createElement('section');section.className='wr-form-section wr-generic-modal-section';
         const heading=document.createElement('h3');
-        const headingText=(drawer.querySelector(':scope > h2')?.textContent||'Details').replace(/^(Add|Create|Edit|Update|New)\\s+/i,'').trim();
+        const headingText=(drawer.querySelector(':scope > h2')?.textContent||'Details').replace(/^(Add|Create|Edit|Update|New)\s+/i,'').trim();
         heading.textContent=headingText+' details';
         const desc=document.createElement('p');desc.className='sub';desc.textContent='Enter the information below.';
         const fields=document.createElement('div');fields.className='wr-form-pair';
