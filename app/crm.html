@@ -444,6 +444,35 @@ try{
        window.wrAuthenticatedProfile={email:user.email||'',name:displayName,role:member.role||'member',workspace:member.workspaces?.name||'Workspace'};
       // Fetch only records permitted by Supabase RLS for the selected workspace.
       const workspaceId=member.workspace_id;
+      // Apply CRM branding only for this authenticated workspace with an active White Label entitlement.
+      try {
+        const {data:grant,error:grantError}=await sb.from('wr_application_entitlements').select('white_label_enabled,billing_state').eq('workspace_id',workspaceId).eq('application_code','crm').maybeSingle();
+        if(grantError)throw grantError;
+        if(grant?.white_label_enabled && ['active','trialing'].includes(grant.billing_state)){
+          const {data:branding,error:brandingError}=await sb.from('wr_workspace_branding').select('brand_name,logo_url,primary_color').eq('workspace_id',workspaceId).eq('application_code','crm').maybeSingle();
+          if(brandingError)throw brandingError;
+          if(branding){
+            const validColor=/^#[0-9a-fA-F]{6}$/.test(branding.primary_color||'')?branding.primary_color:'#1768f5';
+            document.documentElement.style.setProperty('--wr-crm-accent',validColor);
+            document.documentElement.style.setProperty('--accent',validColor);
+            document.documentElement.style.setProperty('--wr-control-focus',validColor);
+            const brandNode=document.querySelector('.sidebar .brand');
+            if(brandNode){
+              const businessName=String(branding.brand_name||'').trim();
+              const logo=String(branding.logo_url||'').trim();
+              if(logo.startsWith('https://')){
+                const img=document.createElement('img');img.src=logo;img.alt=businessName||'Company logo';img.style.cssText='display:block;max-width:180px;max-height:68px;width:auto;height:auto;object-fit:contain';
+                img.onerror=()=>{img.remove();brandNode.textContent=businessName||'workrelief';};
+                brandNode.replaceChildren(img);
+              }else if(businessName){brandNode.textContent=businessName}
+              brandNode.setAttribute('aria-label',businessName||'CRM workspace');
+            }
+            let style=document.getElementById('wr-custom-brand-style');
+            if(!style){style=document.createElement('style');style.id='wr-custom-brand-style';document.head.appendChild(style)}
+            style.textContent='.sidebar .nav button.on,.sidebar .nav button:hover{background-color:'+validColor+' !important;color:#fff !important}.app .btn-primary,.app .button-primary{background-color:'+validColor+' !important;border-color:'+validColor+' !important}';
+          }
+        }
+      }catch(brandingError){console.warn('CRM branding could not load; standard appearance retained',brandingError)}
       window.wrEnterpriseSession={sb,workspaceId,userId:user.id};
       window.dispatchEvent(new Event("wr-enterprise-authenticated"));
       const fail=e=>{console.error('CRM database operation failed:',e);toast('Unable to save: '+(e?.message||'database error'))};
