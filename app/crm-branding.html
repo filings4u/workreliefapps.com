@@ -37,11 +37,11 @@ async function showApplication(){
  $('load').classList.add('hidden');$('editor').classList.add('hidden');$('locked').classList.add('hidden');
  const entitlement=entitlements.find(x=>x.application_code===app);
  const unlocked=entitlement?.white_label_enabled===true&&['active','trialing'].includes(entitlement.billing_state);
- const admin=['owner','admin'].includes(userRole);
- if(!unlocked||!admin){
+ const admin=userRole==='owner';
+ if(!admin){$('load').textContent='Only the workspace owner can manage White Label.';$('load').classList.remove('hidden');return;}if(!unlocked){
   $('locked').classList.remove('hidden');
   $('locked').querySelector('h2').textContent=unlocked?'Your branding is managed by an administrator':'Unlock '+app.toUpperCase()+' white-label branding';
-  $('locked').querySelector('p').textContent=unlocked?'Only workspace owners and administrators can update branding.':'Activate white-label for this application to unlock its custom logo, colors, support email, and branded notifications.';
+  $('locked').querySelector('p').textContent=unlocked?'Only the workspace owner can update branding.':'Activate white-label for this application to unlock its custom logo, colors, support email, and branded notifications.';
   $('upgrade').classList.toggle('hidden',unlocked);
   const checkout=new URL('../checkout.html',location.href);checkout.searchParams.set('apps',app);checkout.searchParams.set('white_label','all');checkout.searchParams.set('workspace_id',wid);checkout.searchParams.set('return_to','app/crm-branding.html?workspace='+wid+'&app='+app);$('upgrade').href=checkout.toString();
   return;
@@ -62,14 +62,14 @@ $('application').addEventListener('change',showApplication);
  member=members.find(x=>x.workspace_id===q.get('workspace'))||members[0];wid=member.workspace_id;userRole=member.role;
  const {data:grants,error:grantError}=await sb.from('wr_application_entitlements').select('application_code,white_label_enabled,billing_state').eq('workspace_id',wid);
  if(grantError)throw grantError;entitlements=grants||[];
- for(const key of Object.keys(colors)){const option=document.createElement('option');option.value=key;option.textContent=key[0].toUpperCase()+key.slice(1);$('application').append(option)}
- $('application').value=colors[q.get('app')]?q.get('app'):'crm';await showApplication();
+ for(const key of Object.keys(colors)){const grant=entitlements.find(x=>x.application_code===key&&['active','trialing'].includes(x.billing_state));const option=document.createElement('option');option.value=key;option.textContent=key.toUpperCase()+(grant?' · Purchased'+(grant.white_label_enabled?' · White Label active':' · White Label available'):' · Purchase application');$('application').append(option)}
+ $('application').value=colors[q.get('app')]?q.get('app'):'crm';if(userRole!=='owner'){location.replace('crm-team-workspace.html?workspace='+encodeURIComponent(wid));return;}await showApplication();
 }catch(error){$('load').textContent=error.message||'Unable to load white-label settings.'}})();
 $('brand-form').addEventListener('submit',async event=>{
  event.preventDefault();const button=$('save-brand');button.disabled=true;msg('Saving your branding…');
  try{
  const ent=entitlements.find(x=>x.application_code===app);
- if(!['owner','admin'].includes(userRole)||!ent?.white_label_enabled||!['active','trialing'].includes(ent.billing_state))throw Error('White-label purchase and administrator access required.');
+ if(userRole!=='owner'||!ent?.white_label_enabled||!['active','trialing'].includes(ent.billing_state))throw Error('White-label purchase and administrator access required.');
  const file=$('brand-logo').files[0];
  if(file){if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024)throw Error('Use PNG, JPEG or WebP under 2 MB.');
  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
