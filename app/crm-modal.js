@@ -20,6 +20,23 @@ function wrEnhanceDrawer(){
  if(form){
   form.classList.remove('formgrid','wr-floating-company-form','wr-floating-regular-form');
   form.classList.add('wm-form');
+  if(title==='Add company'){
+ const names=[['name','website','industry','employee_count','segment','tags_text'],['primary_contact_name','primary_contact_phone','email'],['parent_company_id','owner_id','account_type','territory_id'],['address_line1','address_line2','city','state_region','postal_code','country'],['notes','description','annual_revenue','source','status','industry_naics_code','custom_fields_text','phone']];
+ const headings=['Company basics','Primary contact','Relationships','Address','Notes & insights'];
+ const descriptions=['Add core information about the company.','The first person is added directly to Contacts and set as the primary account contact.','Assign an owner and territory, and categorize the account.','Add the company address.','Save helpful background information.'];
+ const prior=[...form.querySelectorAll(':scope > .wr-form-section')];
+ const allFields=[...form.querySelectorAll('.wr-form-section .field')];
+ const cards=names.map((items,i)=>{
+  const section=document.createElement('section');section.className='wr-form-section';
+  const h=document.createElement('h3');h.textContent=(i+1)+'. '+headings[i];
+  const p=document.createElement('p');p.className='sub';p.textContent=descriptions[i];
+  const grid=document.createElement('div');grid.className='wm-grid';
+  items.forEach(name=>{const input=form.querySelector('[name="'+name+'"]');const field=input?.closest('.field');if(field&&!grid.contains(field))grid.append(field)});
+  section.append(h,p,grid);return section
+ });
+ const extras=allFields.filter(f=>!cards.some(c=>c.contains(f)));extras.forEach(f=>cards[4].lastChild.append(f));
+ prior[0]?.before(...cards);prior.forEach(x=>x.remove());
+}
   const oldSections=[...form.querySelectorAll(':scope > .wr-form-section')];
   const footer=oldSections.length?form.querySelector(':scope > .wr-drawer-footer'):form.querySelector(':scope > .wr-drawer-footer,:scope > .actions');
   const sections=[];
