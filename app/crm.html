@@ -1579,7 +1579,7 @@ try{
         const info=wrLiveDashboard;
         const metric=(name,value,note='')=>`<div class="wr-kpi"><div class="kpi-label">${name}</div><div class="kpi-value">${value}</div>${note?`<div class="kpi-note">${note}</div>`:''}</div>`;
         const k=info?.stats||{};
-        return `<div class="wr-hero"><div><div class="eyebrow">WORKRELIEF CRM</div><h1>Workspace overview</h1><p class="sub">Your latest workspace information.</p></div><div class="wr-refresh-controls"><button type="button" id="wr-dashboard-refresh" class="btn wr-dashboard-refresh" ${wrDashboardLoading?'disabled aria-busy="true"': ''}>${wrDashboardLoading?'↻ Refreshing…':'↻ Refresh dashboard'}</button>${wrDashboardUpdatedAt?`<small class="wr-refresh-time" role="status">Updated ${safe(wrDashboardUpdatedAt.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}</small>`:''}</div></div>`+
+        return `<div class="wr-hero"><div><div class="eyebrow">WORKRELIEF CRM</div><h1>Workspace overview</h1><p class="sub">Your latest workspace information.</p></div><div class="wr-refresh-controls">${wrDashboardUpdatedAt?`<small class="wr-refresh-time" role="status">Updated ${safe(wrDashboardUpdatedAt.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}</small>`:''}</div></div>`+
           (wrDashboardError?`<div class="empty-note" role="alert">Dashboard could not load: ${safe(wrDashboardError)} <button class="btn" onclick="wrRefreshDashboard()">Retry</button></div>`:'')+
           (wrDashboardLoading&&!info?'<p class="sub">Loading live workspace metrics…</p>':'')+
           (info?`<div class="wr-kpis">${metric('Open pipeline',money(Number(k.open_pipeline||0)),`${k.open_deals||0} open opportunities`)}${metric('Won revenue',money(Number(k.won_revenue||0)),`${k.won_deals||0} won opportunities`)}${metric('Contacts',String(k.contacts||0))}${metric('Open tasks',String(k.open_tasks||0))}</div><div class="dashboard-grid"><section class="panel"><div class="panelhead"><h3>Recent opportunities</h3><button class="smalllink" onclick="go('pipeline')">View pipeline →</button></div>${info.deals.map(d=>`<div class="activity"><div><b>${safe(d.title)}</b><small>${safe(d.stage)}</small></div><strong>${money(Number(d.amount||0))}</strong></div>`).join('')||'<p class="sub">No opportunities yet.</p>'}</section><section class="panel"><div class="panelhead"><h3>Upcoming tasks</h3><button class="smalllink" onclick="go('tasks')">View tasks →</button></div>${info.tasks.map(t=>`<div class="activity"><div><b>${safe(t.title)}</b><small>${safe(t.due_at?.slice(0,10)||'No due date')}</small></div></div>`).join('')||'<p class="sub">No open tasks.</p>'}</section></div>`:'');
@@ -1591,10 +1591,6 @@ try{
         else if(wrDashboardError)toast('Dashboard refresh failed: '+wrDashboardError);
         return ok;
       };
-      // Delegation survives dashboard re-rendering after every fetch.
-      document.getElementById('content').addEventListener('click',event=>{
-        if(event.target.closest('#wr-dashboard-refresh'))void window.wrRefreshDashboard();
-      });
       // Dynamic account/person selectors. Only the visible choices are fetched;
       // typing searches Supabase, not a full browser-held CRM dataset.
       const wrDrawerOriginal=openDrawer;
