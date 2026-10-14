@@ -252,6 +252,36 @@ body:has(.drawerback.show){overflow:hidden}
 .wr-mail-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.8fr);gap:24px;align-items:start}.wr-mail-editor-fields{display:grid;gap:16px;border:1px solid #dce5f5;padding:22px;border-radius:16px;background:#fff}.wr-mail-edit-field{display:flex;flex-direction:column;gap:8px;margin:0;font-size:13px;font-weight:700}.wr-mail-edit-field input,.wr-mail-edit-field textarea{box-sizing:border-box;width:100%;font:inherit;font-weight:400;padding:12px;border:1px solid #cddbef;border-radius:10px;background:#fff;color:#152d50}.wr-mail-edit-field textarea{min-height:130px;resize:vertical;line-height:1.6}.wr-mail-edit-checkbox{display:flex;align-items:center;gap:9px;font-size:13px}.wr-mail-edit-checkbox input{accent-color:#1768f5}.wr-mail-editor-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:16px}.wr-mail-preview-panel{position:sticky;top:10px}.wr-mail-preview-panel h3{font-size:16px;margin:0 0 4px}#wr-mail-live-preview{border:1px solid #dbe5f4;border-radius:14px;overflow:hidden;background:white;margin-top:13px;box-shadow:0 8px 30px rgba(14,51,96,.07)}.wr-mail-preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f0f6ff;padding:18px}.wr-mail-preview-head img{width:145px;height:auto;max-height:45px;object-fit:contain}.wr-mail-preview-head span{background:#1768f5;color:#fff;font-weight:700;border-radius:7px;padding:5px 9px;font-size:11px}.wr-mail-preview-body{padding:26px 21px}.wr-mail-preview-body small{font-size:10px;color:#1768f5;font-weight:800;letter-spacing:.14em}.wr-mail-preview-body h3{font-size:21px;margin:10px 0 16px}.wr-mail-preview-body p{font-size:14px;line-height:1.75;color:#475e80;overflow-wrap:anywhere;white-space:pre-wrap}.wr-mail-preview-cta{display:inline-block;background:#1768f5;color:white;border-radius:9px;padding:11px 15px;margin-top:14px;font-size:12px;font-weight:700}.wr-mail-preview-foot{border-top:1px solid #e6edf7;text-align:center;padding:16px;font-size:10px;line-height:1.7;color:#8293a9}
 @media(max-width:920px){.wr-mail-layout{grid-template-columns:1fr}.wr-mail-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wr-mail-editor-layout{grid-template-columns:1fr}.wr-mail-preview-panel{position:static}}
 @media(max-width:610px){.wr-mail-center{padding:0 0 18px}.wr-mail-brand-banner{padding:12px}.wr-mail-ready{margin-left:0}.wr-mail-card-grid,.wr-mail-side{grid-template-columns:1fr}.wr-mail-section-title{align-items:flex-start;flex-direction:column}.wr-mail-template-card{min-height:0}.wr-mail-editor-fields{padding:14px}.wr-mail-editor-actions{flex-wrap:wrap}}
+
+/* Lead insights analytics modal */
+.wm-dialog:has(.wr-lead-insights){width:min(980px,calc(100vw - 32px));max-width:980px}
+.wr-lead-insights{color:#102448}
+.wr-lead-insights h2{margin:5px 0 4px;font-size:30px;letter-spacing:-.035em}
+.wr-lead-insights>.sub{margin:0 0 24px;color:#7385a4}
+.wr-lead-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 25px}
+.wr-lead-metric{display:flex;flex-direction:column;gap:7px;padding:17px 18px;background:#fff;border:1px solid #dfe7f3;border-radius:14px;min-width:0}
+.wr-lead-metric span{font-size:13px;font-weight:650;color:#647a9c}
+.wr-lead-metric strong{font-size:30px;line-height:1.1;letter-spacing:-.04em;color:#102448}
+.wr-lead-metric small{font-size:11px;color:#8190aa}
+.wr-lead-metric-alert{background:#fff8f5;border-color:#f4d9cf}
+.wr-lead-pipeline{border:1px solid #e0e8f4;border-radius:14px;overflow:hidden;background:white}
+.wr-lead-section-heading{padding:18px 20px 14px}
+.wr-lead-section-heading h3{font-size:17px;margin:0 0 3px}
+.wr-lead-section-heading .sub{margin:0;font-size:12px}
+.wr-lead-pipeline .tablewrap{margin:0;border:0;overflow-x:auto}
+.wr-lead-pipeline table{width:100%;border-collapse:collapse}
+.wr-lead-pipeline th{text-align:left;background:#f6f8fc;font-size:11px;letter-spacing:.045em;text-transform:uppercase;color:#7b8ca7;padding:13px 18px}
+.wr-lead-pipeline td{padding:15px 18px;border-top:1px solid #edf1f7}
+.wr-lead-stage{display:inline-block;text-transform:capitalize;background:#edf3ff;border-radius:999px;padding:5px 12px;color:#2254a2;font-weight:600}
+.wr-lead-score{display:flex;align-items:center;gap:12px}
+.wr-lead-score-track{width:115px;height:7px;border-radius:20px;background:#e8edf6;overflow:hidden}
+.wr-lead-score-track span{display:block;height:100%;border-radius:20px;background:var(--wr-crm-accent,#1768f5)}
+.wr-lead-score b{font-weight:600;font-size:12px;white-space:nowrap}
+.wr-lead-empty{text-align:center;color:#7b8ca7;padding:28px!important}
+.wr-lead-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 0;color:#8a98af;font-size:12px}
+@media(max-width:700px){.wr-lead-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.wr-lead-insights h2{font-size:25px}.wr-lead-pipeline th,.wr-lead-pipeline td{padding:12px 10px}.wr-lead-score-track{width:60px}}
+@media(max-width:420px){.wr-lead-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.wr-lead-metric{padding:12px}.wr-lead-metric strong{font-size:26px}.wr-lead-score-track{display:none}}
+
 </style><link rel="icon" type="image/png" href="../assets/img/fav.png">
 <style id="wm-modal-inline">
 /* Rebuilt WorkRelief dialogs — visual reference: approved Add company screenshot. */
@@ -1184,7 +1214,10 @@ try{
           const [summary,stages]=await Promise.all([sb.rpc('wr_lead_conversion_report',{p_workspace_id:workspaceId}),sb.rpc('wr_lead_stage_report',{p_workspace_id:workspaceId})]);
           if(summary.error)throw summary.error;if(stages.error)throw stages.error;
           const a=summary.data||{};
-          openDrawer(`<div class="eyebrow">LEAD ANALYTICS</div><h2>Lead insights</h2><p class="sub">Live figures from your workspace.</p><div class="wr-account-grid">${[['Open leads',a.open_leads],['Converted',a.converted_leads],['MQL',a.mql],['SQL',a.sql],['Overdue follow-ups',a.overdue_followups]].map(([l,v])=>`<div class="wr-account-fact"><span>${safe(l)}</span><strong>${Number(v||0)}</strong></div>`).join('')}</div><section class="wr-form-section"><h3>Qualification pipeline</h3><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Leads</th><th>Average score</th></tr></thead><tbody>${(stages.data||[]).map(r=>`<tr><td>${safe(r.stage)}</td><td>${Number(r.lead_count||0)}</td><td>${Number(r.average_score||0)}/100</td></tr>`).join('')||'<tr><td colspan="3">No leads recorded</td></tr>'}</tbody></table></div></section><button class="btn" onclick="closeDrawer()">Close</button>`);
+          const metrics=[['Open leads',a.open_leads,'Active opportunities'],['Converted',a.converted_leads,'Converted leads'],['MQL',a.mql,'Marketing qualified'],['SQL',a.sql,'Sales qualified'],['Overdue follow-ups',a.overdue_followups,'Need attention']];
+          const cards=metrics.map(([label,value,detail],i)=>`<div class="wr-lead-metric ${i===4&&Number(value||0)>0?'wr-lead-metric-alert':''}"><span>${safe(label)}</span><strong>${Number(value||0)}</strong><small>${safe(detail)}</small></div>`).join('');
+          const rows=(stages.data||[]).map(r=>{const score=Math.min(100,Math.max(0,Number(r.average_score||0)));const stage=String(r.stage||'Unknown').replace(/_/g,' ');return `<tr><td><span class="wr-lead-stage">${safe(stage)}</span></td><td>${Number(r.lead_count||0)}</td><td><div class="wr-lead-score"><div class="wr-lead-score-track"><span style="width:${score}%"></span></div><b>${score.toFixed(0)}/100</b></div></td></tr>`}).join('');
+          openDrawer(`<div class="wr-lead-insights"><div class="eyebrow">LEAD ANALYTICS</div><h2>Lead insights</h2><p class="sub">Live performance and qualification trends for your workspace.</p><div class="wr-lead-metrics">${cards}</div><section class="wr-lead-pipeline"><div class="wr-lead-section-heading"><h3>Qualification pipeline</h3><p class="sub">Lead volume and average qualification score by stage</p></div><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Leads</th><th>Average score</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="wr-lead-empty">No leads recorded yet.</td></tr>'}</tbody></table></div></section><div class="wr-lead-footer"><span>Data from your current workspace</span><button type="button" class="btn" onclick="closeDrawer()">Close</button></div></div>`);
         }catch(error){fail(error)}
       };
       const wrLeadStages=[['new','New'],['working','Working'],['mql','Marketing qualified (MQL)'],['sql','Sales qualified (SQL)'],['nurturing','Nurturing'],['disqualified','Disqualified']];
