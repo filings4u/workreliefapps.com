@@ -62,10 +62,32 @@ async function showBlackouts(){const id=$('blackout-resource').value;if(!id)retu
 $('blackout-resource').onchange=showBlackouts;
 $('blackout-form').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const start=new Date(f.start),end=new Date(f.end);if(!(end>start)){status('Blackout end must follow start.',true);return}const button=e.target.querySelector('[type=submit]');button.disabled=true;try{const {error}=await sb.from('sched_blackouts').insert({workspace_id:workspaceId,resource_id:$('blackout-resource').value,title:f.title.trim(),starts_at:start.toISOString(),ends_at:end.toISOString()});if(error)throw error;await showBlackouts();status('Blackout saved.')}catch(err){status(err.message,true)}finally{button.disabled=false}};
 
+
+async function loadServices(){
+ const box=$('services-list');if(!box)return;box.replaceChildren();
+ const {data,error}=await sb.from('sched_public_services').select('id,slug,title,enabled,duration_minutes').eq('workspace_id',workspaceId).order('created_at',{ascending:false});
+ if(error){box.textContent=error.message;return}
+ for(const service of data||[]){
+  const row=document.createElement('div');row.className='list-row';const title=document.createElement('strong');title.textContent=service.title+' · '+service.duration_minutes+' min';
+  const label=document.createElement('p');label.className='muted';label.textContent=service.enabled?'Published':'Unpublished';
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='btn';toggle.textContent=service.enabled?'Unpublish':'Publish';toggle.disabled=!['owner','admin'].includes(window.wrSchedRole);
+  toggle.onclick=async()=>{if(!confirm((service.enabled?'Unpublish':'Publish')+' this booking page?'))return;const {error}=await sb.from('sched_public_services').update({enabled:!service.enabled}).eq('workspace_id',workspaceId).eq('id',service.id);if(error)status(error.message,true);else await loadServices()};
+  row.append(title,label,toggle);
+  if(service.enabled){const link=document.createElement('a');link.href='book.html?service='+encodeURIComponent(service.slug);link.target='_blank';link.rel='noopener';link.textContent='Open booking page ↗';link.style.marginLeft='12px';row.append(link)}
+  box.append(row);
+ }
+ if(!data?.length)box.textContent='No customer booking services created.';
+}
+$('new-service').onclick=()=>{if(!['owner','admin'].includes(window.wrSchedRole)){status('Only administrators can publish booking pages.',true);return}const select=$('service-resource');select.replaceChildren();for(const resource of resources){const option=document.createElement('option');option.value=resource.id;option.textContent=resource.name;select.append(option)}if(!resources.length){status('Add a resource first.',true);return}$('service-form').reset();modal('service-modal',true)};
+$('service-form').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target)),submit=e.target.querySelector('[type=submit]');submit.disabled=true;try{
+ const slug='booking-'+crypto.randomUUID();const {error}=await sb.from('sched_public_services').insert({workspace_id:workspaceId,resource_id:$('service-resource').value,title:data.title.trim(),description:data.description||'',duration_minutes:Number(data.duration_minutes),slug,enabled:false});
+ if(error)throw error;modal('service-modal',false);await loadServices();status('Booking service created but not published.');
+ }catch(error){status(error.message,true)}finally{submit.disabled=false}};
+
 try{const {data:{user:current},error:authError}=await sb.auth.getUser();if(authError)throw authError;if(!current){location.replace('login.html?next='+encodeURIComponent('app/scheduling.html'+location.search));}else{user=current;const {data:members,error:memberError}=await sb.from('workspace_members').select('workspace_id,role').eq('user_id',user.id);if(memberError)throw memberError;const member=(members||[]).find(m=>m.workspace_id===qp.get('workspace'))||(members||[])[0];if(!member)throw Error('No workspace membership');workspaceId=member.workspace_id;window.wrSchedRole=member.role;
  const {data:grant,error:grantError}=await sb.from('wr_application_entitlements').select('billing_state').eq('workspace_id',workspaceId).eq('application_code','scheduling').maybeSingle();if(grantError)throw grantError;if(!['active','trialing'].includes(grant?.billing_state)){status('Scheduling is not subscribed in this workspace. Purchase the application to continue.',true);$('newBooking').disabled=true;$('newResource').disabled=true;}else{
  const {data:workspaces,error:wError}=await sb.from('workspaces').select('id,name').in('id',(members||[]).map(m=>m.workspace_id));if(wError)throw wError;
  for(const m of members){const opt=document.createElement('option');opt.value=m.workspace_id;opt.textContent=(workspaces||[]).find(w=>w.id===m.workspace_id)?.name||'Workspace';$('workspace').append(opt)}$('workspace').value=workspaceId;$('workspace').onchange=()=>location.href='scheduling.html?workspace='+encodeURIComponent($('workspace').value);
  for(const [id,file]of [['backapps','index.html'],['market','purchase-apps.html'],['subscriptions','subscriptions.html']])$(id).href=file+'?workspace='+encodeURIComponent(workspaceId);
- await load();
+ await load();await loadServices();
  }}}catch(e){status(e.message||'Unable to initialize Scheduling.',true)}
