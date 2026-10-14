@@ -26,3 +26,5 @@ body[data-wr-app="ai"]{--wr-app-accent:#9457e8}
 .wr-shell-action:focus-visible{outline:3px solid color-mix(in srgb,var(--wr-app-accent) 35%,transparent);outline-offset:2px}
 .wr-shell-workspace{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:640px){.wr-shell-card{border-radius:13px}}
+
+.wr-app-identity{display:flex;align-items:center;gap:12px;margin:15px 3px 20px;font-weight:800;font-size:18px;color:var(--wr-shell-ink)}.wr-app-identity-icon{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;border-radius:13px;background:color-mix(in srgb,var(--wr-app-accent) 14%,white);color:var(--wr-app-accent);font-size:22px}.wr-app-identity-name{font-size:18px;letter-spacing:-.35px}
