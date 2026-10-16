@@ -41,7 +41,7 @@ function render(){
  }
  $('metric-total').textContent=bookings.length;$('metric-confirmed').textContent=bookings.filter(b=>b.status==='confirmed').length;$('metric-resources').textContent=resources.length;
  const list=$('upcoming-list');list.replaceChildren();for(const b of visible.filter(b=>new Date(b.ends_at)>new Date()).sort((x,y)=>new Date(x.starts_at)-new Date(y.starts_at)).slice(0,8)){const row=document.createElement('div');row.className='list-row';const title=document.createElement('strong');title.textContent=b.title;const time=document.createElement('small');time.className='muted';time.textContent=shortDate(b.starts_at)+' · '+b.status;row.append(title,time);row.style.cursor='pointer';row.onclick=()=>editBooking(b);list.append(row)}if(!list.children.length)list.textContent='No upcoming bookings in this period.';
- const resourcesList=$('resource-list');resourcesList.replaceChildren();for(const r of resources){const item=document.createElement('div');item.className='list-row';item.textContent=r.name+' · '+r.resource_type;resourcesList.append(item)}if(!resources.length)resourcesList.textContent='No resources yet.';
+ const resourcesList=$('resource-list');resourcesList.replaceChildren();for(const r of resources){const item=document.createElement('div');item.className='list-row';item.textContent=r.name+' · '+r.resource_type+' · '+(r.assigned_user_id?'Assigned '+r.assigned_user_id.slice(0,8):'Unassigned')+' · '+(r.timezone||'UTC');resourcesList.append(item)}if(!resources.length)resourcesList.textContent='No resources yet.';
 }
 async function load(){
  if(!workspaceId)return;const start=new Date(month.getFullYear(),month.getMonth()-1,-7),end=new Date(month.getFullYear(),month.getMonth()+2,15);
