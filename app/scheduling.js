@@ -77,7 +77,7 @@ async function loadServices(){
   const toggle=document.createElement('button');toggle.type='button';toggle.className='btn';toggle.textContent=service.enabled?'Unpublish':'Publish';toggle.disabled=!['owner','admin'].includes(window.wrSchedRole);
   toggle.onclick=async()=>{if(!await wrConfirm((service.enabled?'Unpublish':'Publish')+' this booking page?',service.enabled?'Unpublish page':'Publish page'))return;const {error}=await sb.from('sched_public_services').update({enabled:!service.enabled}).eq('workspace_id',workspaceId).eq('id',service.id);if(error)status(error.message,true);else await loadServices()};
   row.append(title,label,toggle);
-  if(service.enabled){const link=document.createElement('a');link.href='https://workreliefapps.com/app/book?service='+encodeURIComponent(service.slug);link.target='_blank';link.rel='noopener';link.textContent='Open booking page ↗';link.style.marginLeft='12px';row.append(link)}
+  if(service.enabled){const link=document.createElement('a');link.href='book.html?service='+encodeURIComponent(service.slug);link.target='_blank';link.rel='noopener';link.textContent='Open booking page ↗';link.style.marginLeft='12px';row.append(link)}
   box.append(row);
  }
  if(!data?.length)box.textContent='No customer booking services created.';
