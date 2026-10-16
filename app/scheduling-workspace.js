@@ -1,0 +1,31 @@
+/* WorkRelief Scheduling workspace: distinct modules using existing scheduling controls. */
+(()=>{
+ const $=id=>document.getElementById(id);
+ const main=document.querySelector('.content'),head=main?.querySelector('.head'),stats=main?.querySelector('.stats'),layout=main?.querySelector('.layout');
+ if(!main||!head||!stats||!layout)return;
+ const calendar=$('calendar'),upcoming=$('upcoming'),resources=$('resources'),services=$('services');
+ const create=(id,heading,description)=>{const section=document.createElement('section');section.className='sched-panel';section.id='sched-page-'+id;section.hidden=true;const h=document.createElement('h2');h.className='sched-page-heading';h.textContent=heading;const p=document.createElement('p');p.className='sched-page-sub';p.textContent=description;section.append(h,p);main.append(section);return section};
+ const dashboard=create('dashboard','Workspace overview','A central view of bookings, resource capacity and your next actions.');
+ const calendarPage=create('calendar','Team calendar','View and manage appointments across your team and resources.');
+ const appointments=create('appointments','Appointments','Review upcoming, past and cancelled bookings. Select an appointment to edit or reschedule.');
+ const availability=create('availability','Availability & working hours','Set resource working hours and blackout periods before publishing services.');
+ const resourcesPage=create('resources','Resources','Manage staff, rooms, equipment and other schedulable resources.');
+ const servicesPage=create('services','Customer booking pages','Create services, manage publication and open customer-facing booking pages.');
+ dashboard.append(stats);
+ const guide=document.createElement('div');guide.className='sched-dashboard-guide';guide.innerHTML='<h3>Complete your scheduling setup</h3><p>Configure resources and availability, then publish a customer booking page when you are ready.</p>';
+ const actions=[['Manage availability','availability'],['Booking pages','services']];
+ for(const [label,id] of actions){const btn=document.createElement('button');btn.className='btn';btn.textContent=label;btn.onclick=()=>navigate(id);guide.append(btn)}
+ dashboard.append(guide,upcoming);
+ calendarPage.append(calendar);
+ const appointCard=document.createElement('div');appointCard.className='card sched-section-card';const list=document.createElement('div');list.className='sched-view-list';list.id='sched-appointment-list';appointCard.append(list);appointments.append(appointCard);
+ availability.append(resources.cloneNode(false));const availCard=availability.lastElementChild;availCard.id='sched-availability-card';availCard.className='card sched-section-card';const availIntro=document.createElement('p');availIntro.className='muted';availIntro.textContent='Working hours and blackout rules are configured for each resource. Hours are enforced when creating confirmed resource bookings.';availCard.append(availIntro);
+ const availTools=document.createElement('div');availTools.className='controls';for(const [title,target] of [['Manage working hours','edit-hours'],['Blackout dates','edit-blackouts']]){const button=document.createElement('button');button.className='btn';button.textContent=title;button.onclick=()=$(target).click();availTools.append(button)}availCard.append(availTools);
+ resourcesPage.append(resources);servicesPage.append(services);
+ layout.remove();
+ const nav=[...document.querySelectorAll('[data-sched-view]')];const titles={dashboard:['Scheduling overview','Your bookings, availability and team at a glance.'],calendar:['Team calendar','Appointments, meetings, shifts and resource schedules.'],appointments:['Appointments','Manage scheduled appointments across your workspace.'],availability:['Availability','Working hours, holidays and resource blackouts.'],resources:['Resources','Staff, rooms, equipment and schedulable resources.'],services:['Booking pages','Customer-facing services and online scheduling.']};
+ function navigate(view){if(!titles[view])view='dashboard';for(const node of main.querySelectorAll('.sched-panel'))node.hidden=node.id!=='sched-page-'+view;nav.forEach(a=>{a.classList.toggle('active',a.dataset.schedView===view);a.setAttribute('aria-current',a.dataset.schedView===view?'page':'false')});const heading=head.querySelector('h1'),sub=head.querySelector('.muted');if(heading)heading.textContent=titles[view][0];if(sub)sub.textContent=titles[view][1];for(const id of ['view-mode','today','prev','next']){const node=$(id);if(node)node.hidden=view!=='calendar'}history.replaceState(null,'',location.pathname+location.search+'#'+view);if(view==='appointments')renderAppointments()}
+ function renderAppointments(){list.replaceChildren();const events=[...document.querySelectorAll('#calendar-grid .event')];const rows=[...document.querySelectorAll('#upcoming-list .list-row')];if(!rows.length){const empty=document.createElement('div');empty.className='sched-empty';empty.textContent='No upcoming appointments in the selected period. Create a booking from the top-right action.';list.append(empty);return}for(const item of rows){const row=document.createElement('div');row.className='sched-appointment-row';const label=document.createElement('div');label.innerHTML='<strong></strong><small></small>';label.querySelector('strong').textContent=item.querySelector('strong')?.textContent||'Appointment';label.querySelector('small').textContent=item.querySelector('small')?.textContent||'';const details=document.createElement('div');details.className='muted';details.textContent='Workspace booking';const state=document.createElement('span');state.className='sched-state-pill';state.textContent='Scheduled';const edit=document.createElement('button');edit.className='btn';edit.textContent='View / Edit';edit.onclick=()=>item.click();row.append(label,details,state,edit);list.append(row)}}
+ nav.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();navigate(a.dataset.schedView)}));
+ const observer=new MutationObserver(()=>{if(!appointments.hidden)renderAppointments()});observer.observe($('upcoming-list'),{childList:true});
+ window.addEventListener('hashchange',()=>navigate(location.hash.slice(1)));navigate(location.hash.slice(1)||'dashboard');
+})();
