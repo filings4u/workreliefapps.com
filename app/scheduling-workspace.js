@@ -38,16 +38,73 @@
  }
  window.addEventListener('wr-scheduling-loaded',teamAccess);teamAccess();
  nav.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();navigate(a.dataset.schedView)}));
- let searchAdded=false;const originalRender=renderAppointments;
- function renderRealAppointments(){
-   const api=window.wrSchedulingApi;if(!api?.getWorkspace())return originalRender();
-   list.replaceChildren();const search=document.createElement('input');search.placeholder='Search appointments…';search.setAttribute('aria-label','Search appointments');search.style.cssText='width:100%;border:1px solid #cbdfe6;border-radius:10px;padding:12px;margin-bottom:12px';if(!searchAdded){appointCard.insertBefore(search,list);searchAdded=true}else{const existing=appointCard.querySelector('input[aria-label="Search appointments"]');if(existing)existing.remove();appointCard.insertBefore(search,list)}
-   const rows=()=>{list.replaceChildren();const term=search.value.trim().toLowerCase();const data=api.getBookings().filter(b=>!term||[b.title,b.booking_type,b.status].some(v=>String(v||'').toLowerCase().includes(term))).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
-    if(!data.length){const e=document.createElement('div');e.className='sched-empty';e.textContent='No appointments match this view.';list.append(e)}
-    for(const b of data){const row=document.createElement('div');row.className='sched-appointment-row';const left=document.createElement('div');const title=document.createElement('strong');title.textContent=b.title;const dates=document.createElement('small');dates.textContent=new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(b.starts_at));left.append(title,dates);const type=document.createElement('div');type.textContent=b.booking_type;const state=document.createElement('span');state.className='sched-state-pill';state.textContent=b.status;state.classList.toggle('cancelled',b.status==='cancelled');const edit=document.createElement('button');edit.className='btn';edit.textContent='View / Edit';edit.onclick=()=>api.editBooking(b);row.append(left,type,state,edit);list.append(row)}
-   };search.oninput=rows;rows();
+ // Appointment controls persist between data refreshes; filtering never mutates bookings.
+ const appointmentTools=document.createElement('div');
+ appointmentTools.className='controls sched-appointment-tools';
+ appointmentTools.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px';
+ const appointmentSearch=document.createElement('input');
+ appointmentSearch.type='search';
+ appointmentSearch.placeholder='Search title, type or status…';
+ appointmentSearch.setAttribute('aria-label','Search appointments');
+ appointmentSearch.style.cssText='flex:2 1 220px;min-width:0;border:1px solid #cbdfe6;border-radius:10px;padding:11px';
+ const appointmentStatus=document.createElement('select');
+ appointmentStatus.setAttribute('aria-label','Filter appointments by status');
+ appointmentStatus.className='btn';
+ for(const [value,label] of [['all','All statuses'],['scheduled','Scheduled'],['confirmed','Confirmed'],['completed','Completed'],['cancelled','Cancelled']]){
+  const option=document.createElement('option');option.value=value;option.textContent=label;appointmentStatus.append(option);
  }
+ const appointmentType=document.createElement('select');
+ appointmentType.setAttribute('aria-label','Filter appointments by type');
+ appointmentType.className='btn';
+ for(const [value,label] of [['all','All types'],['appointment','Appointments'],['meeting','Meetings'],['shift','Shifts'],['event','Events']]){
+  const option=document.createElement('option');option.value=value;option.textContent=label;appointmentType.append(option);
+ }
+ appointmentTools.append(appointmentSearch,appointmentStatus,appointmentType);
+ appointCard.insertBefore(appointmentTools,list);
+ const appointmentCount=document.createElement('p');
+ appointmentCount.className='muted';
+ appointmentCount.setAttribute('role','status');
+ appointCard.insertBefore(appointmentCount,list);
+ function renderRealAppointments(){
+  const api=window.wrSchedulingApi;
+  if(!api?.getWorkspace())return originalRender();
+  list.replaceChildren();
+  const term=appointmentSearch.value.trim().toLocaleLowerCase();
+  const status=appointmentStatus.value,type=appointmentType.value;
+  const bookings=api.getBookings().filter(b=>
+   (status==='all'||String(b.status||'scheduled').toLowerCase()===status)&&
+   (type==='all'||String(b.booking_type||'appointment').toLowerCase()===type)&&
+   (!term||[b.title,b.booking_type,b.status,b.description].some(v=>String(v||'').toLocaleLowerCase().includes(term)))
+  ).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+  appointmentCount.textContent=bookings.length+' appointment'+(bookings.length===1?'':'s')+' matching filters';
+  if(!bookings.length){
+   const empty=document.createElement('div');empty.className='sched-empty';
+   empty.textContent='No appointments match these filters. Try a different search or status.';
+   list.append(empty);return;
+  }
+  for(const b of bookings){
+   const row=document.createElement('div');row.className='sched-appointment-row';
+   const left=document.createElement('div');
+   const title=document.createElement('strong');title.textContent=b.title||'Untitled booking';
+   const dates=document.createElement('small');
+   const start=new Date(b.starts_at),end=new Date(b.ends_at);
+   dates.textContent=Number.isNaN(start.getTime())?'Date unavailable':
+    new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(start)+
+    (Number.isNaN(end.getTime())?'':' – '+new Intl.DateTimeFormat(undefined,{timeStyle:'short'}).format(end));
+   left.append(title,dates);
+   const bookingType=document.createElement('div');
+   bookingType.textContent=b.booking_type||'Appointment';
+   const state=document.createElement('span');state.className='sched-state-pill';
+   state.textContent=b.status||'Scheduled';
+   state.classList.toggle('cancelled',b.status==='cancelled');
+   const edit=document.createElement('button');edit.type='button';edit.className='btn';
+   edit.textContent='View / Edit';edit.onclick=()=>api.editBooking(b);
+   row.append(left,bookingType,state,edit);list.append(row);
+  }
+ }
+ const originalRender=renderAppointments;
  renderAppointments=renderRealAppointments;
+ for(const control of [appointmentSearch,appointmentStatus,appointmentType])control.addEventListener('input',renderRealAppointments);
  window.addEventListener('wr-scheduling-loaded',()=>{if(!appointments.hidden)renderAppointments()});
  const observer=new MutationObserver(()=>{if(!appointments.hidden)renderAppointments()});observer.observe($('upcoming-list'),{childList:true});
  window.addEventListener('hashchange',()=>navigate(location.hash.slice(1)));navigate(location.hash.slice(1)||'dashboard');
