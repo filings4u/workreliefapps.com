@@ -30,6 +30,50 @@ async function checkBookingAvailability(){
 }
 for(const name of ['resource_id','start','end'])$('booking-form').elements[name].addEventListener('change',()=>{void checkBookingAvailability()});
 
+let slotsRequest=0;
+async function showAvailableSlots(){
+ const token=++slotsRequest,form=$('booking-form'),panel=$('booking-slots'),options=$('booking-slot-options'),message=$('booking-slots-state');
+ const resourceId=form.elements.resource_id.value,requested=new Date(form.elements.start.value),ends=new Date(form.elements.end.value);
+ panel.hidden=!resourceId;options.replaceChildren();
+ if(!resourceId||!workspaceId)return;
+ if(Number.isNaN(requested.getTime())){message.textContent='Choose a date to view available times.';return}
+ const resource=resources.find(r=>r.id===resourceId);
+ const browserZone=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';
+ if(resource?.timezone&&resource.timezone!==browserZone){message.textContent='This resource uses '+resource.timezone+'. Automatic suggestions require your browser time zone to match. Manual booking remains available with server validation.';return}
+ message.textContent='Finding available start times…';
+ const dayStart=new Date(requested.getFullYear(),requested.getMonth(),requested.getDate());
+ const dayEnd=new Date(dayStart);dayEnd.setDate(dayEnd.getDate()+1);
+ const duration=ends>requested?ends.getTime()-requested.getTime():3600000;
+ try{
+  const [hours,booked,blocked]=await Promise.all([
+   sb.from('sched_working_hours').select('weekday,start_time,end_time').eq('workspace_id',workspaceId).eq('resource_id',resourceId).eq('weekday',dayStart.getDay()),
+   sb.from('sched_bookings').select('id,starts_at,ends_at').eq('workspace_id',workspaceId).eq('resource_id',resourceId).eq('status','confirmed').lt('starts_at',dayEnd.toISOString()).gt('ends_at',dayStart.toISOString()),
+   sb.from('sched_blackouts').select('starts_at,ends_at').eq('workspace_id',workspaceId).eq('resource_id',resourceId).lt('starts_at',dayEnd.toISOString()).gt('ends_at',dayStart.toISOString())
+  ]);
+  if(token!==slotsRequest)return;
+  for(const response of [hours,booked,blocked])if(response.error)throw response.error;
+  const rules=hours.data||[],busy=[...(booked.data||[]).filter(b=>b.id!==form.elements.booking_id.value),...(blocked.data||[])];
+  let count=0;
+  for(const rule of rules){
+   const [sh,sm]=rule.start_time.split(':').map(Number),[eh,em]=rule.end_time.split(':').map(Number);
+   const begin=new Date(dayStart);begin.setHours(sh,sm,0,0);
+   const finish=new Date(dayStart);finish.setHours(eh,em,0,0);
+   for(let time=begin.getTime();time+duration<=finish.getTime()&&count<32;time+=30*60000){
+    if(time<Date.now())continue;
+    if(busy.some(b=>time<new Date(b.ends_at).getTime()&&time+duration>new Date(b.starts_at).getTime()))continue;
+    const startDate=new Date(time),endDate=new Date(time+duration);
+    const button=document.createElement('button');button.type='button';
+    button.textContent=new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(startDate);
+    button.onclick=()=>{form.elements.start.value=localInput(startDate);form.elements.end.value=localInput(endDate);void checkBookingAvailability();};
+    options.append(button);count++;
+   }
+  }
+  message.textContent=count?'Choose a start time below ('+Math.round(duration/60000)+'-minute appointment).':'No available times found for this resource and date.';
+ }catch(error){if(token!==slotsRequest)return;message.textContent='Unable to load available times: '+(error.message||'Unknown error')}
+}
+for(const name of ['resource_id','start','end'])$('booking-form').elements[name].addEventListener('change',()=>{void showAvailableSlots()});
+
+
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>modal(b.closest('.modal').id,false)));
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)modal(m.id,false)}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal').forEach(m=>m.hidden=true)});
@@ -38,7 +82,7 @@ let wrConfirmResolve=null;
 function wrConfirm(message,label='Confirm'){return new Promise(resolve=>{wrConfirmResolve=resolve;$('confirm-heading').textContent=label;$('confirm-message').textContent=message;$('confirm-yes').textContent=label;modal('confirm-modal',true)})}
 function wrResolveConfirm(value){modal('confirm-modal',false);if(wrConfirmResolve){wrConfirmResolve(value);wrConfirmResolve=null}}
 $('confirm-no').onclick=()=>wrResolveConfirm(false);$('confirm-yes').onclick=()=>wrResolveConfirm(true);
-$('newBooking').onclick=()=>{const start=new Date();start.setMinutes(0,0,0);start.setHours(start.getHours()+1);const end=new Date(start.getTime()+3600000);$('booking-form').reset();bookingFeedback();$('booking-availability').hidden=true;availabilitySequence++;$('booking-status-field').hidden=true;$('booking-heading').textContent='New booking';$('recurrence-fields').hidden=false;$('cancel-booking').hidden=true;$('booking-form').elements.booking_id.value='';$('booking-form').elements.start.value=localInput(start);$('booking-form').elements.end.value=localInput(end);modal('booking-modal',true)};
+$('newBooking').onclick=()=>{const start=new Date();start.setMinutes(0,0,0);start.setHours(start.getHours()+1);const end=new Date(start.getTime()+3600000);$('booking-form').reset();bookingFeedback();$('booking-availability').hidden=true;availabilitySequence++;$('booking-status-field').hidden=true;$('booking-heading').textContent='New booking';$('recurrence-fields').hidden=false;$('cancel-booking').hidden=true;$('booking-form').elements.booking_id.value='';$('booking-form').elements.start.value=localInput(start);$('booking-form').elements.end.value=localInput(end);modal('booking-modal',true);void showAvailableSlots()};
 $('newResource').onclick=()=>{if(!['owner','admin'].includes(window.wrSchedRole)){status('Only workspace administrators can create resources.',true);return}$('resource-form').reset();modal('resource-modal',true)};
 $('today').onclick=()=>{month=new Date();month.setDate(1);load()};
 $('prev').onclick=()=>{view==='day'?month.setDate(month.getDate()-1):view==='week'||view==='agenda'?month.setDate(month.getDate()-7):month.setMonth(month.getMonth()-1);load()};
@@ -46,7 +90,7 @@ $('next').onclick=()=>{view==='day'?month.setDate(month.getDate()+1):view==='wee
 $('resource-filter').onchange=render;
 window.wrSchedulingApi={getWorkspace:()=>workspaceId,getBookings:()=>bookings,getResources:()=>resources,getRole:()=>window.wrSchedRole,editBooking:(booking)=>editBooking(booking),reload:()=>load(),client:sb};
 function editBooking(booking){
- const form=$('booking-form');form.reset();bookingFeedback();$('booking-availability').hidden=true;availabilitySequence++;form.elements.booking_id.value=booking.id;form.elements.title.value=booking.title;form.elements.booking_type.value=booking.booking_type;form.elements.resource_id.value=booking.resource_id||'';form.elements.start.value=localInput(booking.starts_at);form.elements.end.value=localInput(booking.ends_at);form.elements.description.value=booking.description||'';form.elements.booking_status.value=booking.status||'confirmed';$('booking-status-field').hidden=false;$('booking-heading').textContent='Edit booking';$('recurrence-fields').hidden=true;$('cancel-booking').hidden=booking.status==='cancelled';modal('booking-modal',true);void checkBookingAvailability();
+ const form=$('booking-form');form.reset();bookingFeedback();$('booking-availability').hidden=true;availabilitySequence++;form.elements.booking_id.value=booking.id;form.elements.title.value=booking.title;form.elements.booking_type.value=booking.booking_type;form.elements.resource_id.value=booking.resource_id||'';form.elements.start.value=localInput(booking.starts_at);form.elements.end.value=localInput(booking.ends_at);form.elements.description.value=booking.description||'';form.elements.booking_status.value=booking.status||'confirmed';$('booking-status-field').hidden=false;$('booking-heading').textContent='Edit booking';$('recurrence-fields').hidden=true;$('cancel-booking').hidden=booking.status==='cancelled';modal('booking-modal',true);void checkBookingAvailability();void showAvailableSlots();
 }
 function render(){
  const grid=$('calendar-grid');grid.replaceChildren();grid.className='calendar-grid';const resourceId=$('resource-filter').value;
