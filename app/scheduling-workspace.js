@@ -50,7 +50,7 @@
  const appointmentStatus=document.createElement('select');
  appointmentStatus.setAttribute('aria-label','Filter appointments by status');
  appointmentStatus.className='btn';
- for(const [value,label] of [['all','All statuses'],['scheduled','Scheduled'],['confirmed','Confirmed'],['completed','Completed'],['cancelled','Cancelled']]){
+ for(const [value,label] of [['all','All statuses'],['confirmed','Confirmed'],['tentative','Tentative'],['cancelled','Cancelled']]){
   const option=document.createElement('option');option.value=value;option.textContent=label;appointmentStatus.append(option);
  }
  const appointmentType=document.createElement('select');
@@ -72,7 +72,7 @@
   const term=appointmentSearch.value.trim().toLocaleLowerCase();
   const status=appointmentStatus.value,type=appointmentType.value;
   const bookings=api.getBookings().filter(b=>
-   (status==='all'||String(b.status||'scheduled').toLowerCase()===status)&&
+   (status==='all'||String(b.status||'confirmed').toLowerCase()===status)&&
    (type==='all'||String(b.booking_type||'appointment').toLowerCase()===type)&&
    (!term||[b.title,b.booking_type,b.status,b.description].some(v=>String(v||'').toLocaleLowerCase().includes(term)))
   ).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
@@ -95,7 +95,7 @@
    const bookingType=document.createElement('div');
    bookingType.textContent=b.booking_type||'Appointment';
    const state=document.createElement('span');state.className='sched-state-pill';
-   state.textContent=b.status||'Scheduled';
+   state.textContent=b.status||'Confirmed';
    state.classList.toggle('cancelled',b.status==='cancelled');
    const edit=document.createElement('button');edit.type='button';edit.className='btn';
    edit.textContent='View / Edit';edit.onclick=()=>api.editBooking(b);
