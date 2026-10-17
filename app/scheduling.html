@@ -44,7 +44,7 @@ dialog{border:1px solid var(--line);border-radius:17px;box-shadow:0 20px 75px #1
 <button class="nav" data-section="appointments">◷ &nbsp; Appointments</button>
 <button class="nav" data-section="resources">♙ &nbsp; Resources</button>
 <button class="nav" data-section="services">↗ &nbsp; Booking pages</button>
-<button class="nav" data-section="blackouts">⊘ &nbsp; Blackout dates</button>
+<button class="nav" data-section="blackouts">⊘ &nbsp; Blackout dates</button><a class="nav" href="scheduling-operations.html">▤ &nbsp; Availability &amp; reports</a>
 <a class="nav" href="index.html">← &nbsp; All applications</a></nav>
 <p class="muted" style="font-size:11px;margin-top:auto">Scheduling · WorkRelief</p>
 </aside><div class="main">
@@ -76,8 +76,8 @@ dialog{border:1px solid var(--line);border-radius:17px;box-shadow:0 20px 75px #1
 <div class="dialog-actions wide"><button type="button" class="secondary" data-close="resource-dialog">Close</button><button class="primary">Create resource</button></div></form></div></dialog>
 <dialog id="service-dialog"><div class="dialog-inner"><div class="section-head"><h2>Create booking service</h2><button class="secondary" data-close="service-dialog">✕</button></div><form id="service-form" class="form-grid">
 <label class="wide">Service name<input name="title" maxlength="150" required placeholder="e.g. Consultation"></label>
-<label>Booking URL slug<input name="slug" maxlength="90" pattern="[a-z0-9-]+" required placeholder="consultation-30"></label>
-<label>Duration (minutes)<input name="duration_minutes" type="number" min="5" max="480" step="5" value="30" required></label>
+<label>Booking URL slug<input name="slug" maxlength="80" pattern="[a-z0-9][a-z0-9-]{5,79}" required placeholder="consultation-30"></label>
+<label>Duration (minutes)<input name="duration_minutes" type="number" min="15" max="240" step="5" value="30" required></label>
 <label class="wide">Resource<select name="resource_id" id="service-resource" required></select></label>
 <label class="wide">Description<textarea name="description" rows="2"></textarea></label>
 <div class="dialog-actions wide"><button type="button" class="secondary" data-close="service-dialog">Close</button><button class="primary">Create service</button></div></form></div></dialog>
